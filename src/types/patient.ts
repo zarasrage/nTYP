@@ -65,6 +65,7 @@ export interface Alert {
   type: AlertType
   due_date: string
   note: string | null
+  completed: boolean
   patient?: { full_name: string } | null
 }
 

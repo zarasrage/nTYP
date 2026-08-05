@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from './lib/supabaseClient'
 import { PatientList } from './components/PatientList'
 import { PatientForm } from './components/PatientForm'
+import { PatientAlertsView } from './components/PatientAlertsView'
 import { AlertsPanel } from './components/AlertsPanel'
 import { DiagnosisAdmin } from './components/DiagnosisAdmin'
 import type { Alert, Patient, PatientInput } from './types/patient'
@@ -11,6 +12,7 @@ type PatientView =
   | { name: 'list' }
   | { name: 'new' }
   | { name: 'edit'; patient: Patient }
+  | { name: 'patient-alerts'; patient: Patient }
   | { name: 'diagnoses' }
 
 function App() {
@@ -58,31 +60,54 @@ function App() {
   async function handleSave(input: PatientInput) {
     setError(null)
     if (patientView.name === 'edit') {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('patients')
         .update(input)
         .eq('id', patientView.patient.id)
+        .select()
+        .single()
       if (error) {
         setError(error.message)
         return
       }
+      await loadPatients()
+      setPatientView({ name: 'patient-alerts', patient: data as Patient })
     } else {
-      const { error } = await supabase.from('patients').insert(input)
+      const { data, error } = await supabase
+        .from('patients')
+        .insert(input)
+        .select()
+        .single()
       if (error) {
         setError(error.message)
         return
       }
+      await loadPatients()
+      setPatientView({ name: 'patient-alerts', patient: data as Patient })
     }
-    await loadPatients()
-    await loadAlerts()
-    setPatientView({ name: 'list' })
+  }
+
+  async function handleToggleAlertComplete(alert: Alert) {
+    setAlerts((prev) =>
+      prev.map((a) =>
+        a.id === alert.id ? { ...a, completed: !a.completed } : a,
+      ),
+    )
+    const { error } = await supabase
+      .from('alerts')
+      .update({ completed: !alert.completed })
+      .eq('id', alert.id)
+    if (error) {
+      setError(error.message)
+      await loadAlerts()
+    }
   }
 
   function handleSelectAlert(alert: Alert) {
     const patient = patients.find((p) => p.id === alert.patient_id)
     if (!patient) return
     setSection('patients')
-    setPatientView({ name: 'edit', patient })
+    setPatientView({ name: 'patient-alerts', patient })
   }
 
   return (
@@ -132,6 +157,7 @@ function App() {
             alerts={alerts}
             loading={loadingAlerts}
             onSelectAlert={handleSelectAlert}
+            onToggleComplete={handleToggleAlertComplete}
           />
         )}
 
@@ -139,7 +165,10 @@ function App() {
           <PatientList
             patients={patients}
             loading={loadingPatients}
-            onSelect={(patient) => setPatientView({ name: 'edit', patient })}
+            onOpenAlerts={(patient) =>
+              setPatientView({ name: 'patient-alerts', patient })
+            }
+            onEdit={(patient) => setPatientView({ name: 'edit', patient })}
             onNew={() => setPatientView({ name: 'new' })}
             onManageDiagnoses={() => setPatientView({ name: 'diagnoses' })}
           />
@@ -147,6 +176,16 @@ function App() {
 
         {section === 'patients' && patientView.name === 'diagnoses' && (
           <DiagnosisAdmin onBack={() => setPatientView({ name: 'list' })} />
+        )}
+
+        {section === 'patients' && patientView.name === 'patient-alerts' && (
+          <PatientAlertsView
+            patient={patientView.patient}
+            onBack={() => setPatientView({ name: 'list' })}
+            onEdit={() =>
+              setPatientView({ name: 'edit', patient: patientView.patient })
+            }
+          />
         )}
 
         {section === 'patients' && patientView.name === 'new' && (
@@ -169,10 +208,12 @@ function App() {
             <PatientForm
               initial={patientView.patient}
               onSave={handleSave}
-              onCancel={() => {
-                setPatientView({ name: 'list' })
-                loadAlerts()
-              }}
+              onCancel={() =>
+                setPatientView({
+                  name: 'patient-alerts',
+                  patient: patientView.patient,
+                })
+              }
             />
           </>
         )}

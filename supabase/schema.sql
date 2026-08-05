@@ -59,11 +59,13 @@ create table if not exists public.alerts (
   patient_id uuid not null references public.patients (id) on delete cascade,
   type text not null check (type in ('seguimiento', 'curacion', 'control', 'cultivos_biopsia')),
   due_date date not null,
-  note text
+  note text,
+  completed boolean not null default false
 );
 
 create index if not exists alerts_due_date_idx on public.alerts (due_date);
 create index if not exists alerts_patient_id_idx on public.alerts (patient_id);
+create index if not exists alerts_completed_idx on public.alerts (completed);
 
 -- Mantener updated_at al día en cada edición.
 create or replace function public.set_updated_at()

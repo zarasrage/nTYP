@@ -4,7 +4,8 @@ import type { Patient } from '../types/patient'
 interface Props {
   patients: Patient[]
   loading: boolean
-  onSelect: (patient: Patient) => void
+  onOpenAlerts: (patient: Patient) => void
+  onEdit: (patient: Patient) => void
   onNew: () => void
   onManageDiagnoses: () => void
 }
@@ -14,7 +15,8 @@ type Tab = 'seguimiento' | 'todos'
 export function PatientList({
   patients,
   loading,
-  onSelect,
+  onOpenAlerts,
+  onEdit,
   onNew,
   onManageDiagnoses,
 }: Props) {
@@ -101,10 +103,10 @@ export function PatientList({
       ) : (
         <ul className="mt-6 divide-y divide-slate-200 rounded-xl border border-slate-200 dark:divide-slate-800 dark:border-slate-800">
           {filtered.map((p) => (
-            <li key={p.id}>
+            <li key={p.id} className="flex items-center">
               <button
-                onClick={() => onSelect(p)}
-                className="flex w-full items-center justify-between px-4 py-3 text-left hover:bg-slate-50 dark:hover:bg-slate-900"
+                onClick={() => onOpenAlerts(p)}
+                className="flex flex-1 items-center justify-between px-4 py-3 text-left hover:bg-slate-50 dark:hover:bg-slate-900"
               >
                 <div>
                   <p className="font-medium text-slate-900 dark:text-slate-100">
@@ -133,6 +135,13 @@ export function PatientList({
                   </p>
                 </div>
                 <span className="text-slate-400">›</span>
+              </button>
+              <button
+                onClick={() => onEdit(p)}
+                aria-label={`Editar ${p.full_name}`}
+                className="px-3 py-3 text-slate-400 hover:text-teal-700 dark:hover:text-teal-400"
+              >
+                ✎
               </button>
             </li>
           ))}

@@ -6,6 +6,7 @@ interface Props {
   alerts: Alert[]
   loading: boolean
   onSelectAlert: (alert: Alert) => void
+  onToggleComplete: (alert: Alert) => void
 }
 
 type Tab = 'hoy' | 'semana' | 'mes' | 'historicas'
@@ -31,7 +32,12 @@ function formatDate(iso: string) {
   return `${d}-${m}-${y}`
 }
 
-export function AlertsPanel({ alerts, loading, onSelectAlert }: Props) {
+export function AlertsPanel({
+  alerts,
+  loading,
+  onSelectAlert,
+  onToggleComplete,
+}: Props) {
   const [tab, setTab] = useState<Tab>('hoy')
 
   const today = todayISO()
@@ -39,17 +45,27 @@ export function AlertsPanel({ alerts, loading, onSelectAlert }: Props) {
   const monthEnd = endOfMonthISO()
 
   const filtered = useMemo(() => {
+    let list: Alert[]
     switch (tab) {
       case 'hoy':
-        return alerts.filter((a) => a.due_date === today)
+        list = alerts.filter((a) => a.due_date === today)
+        break
       case 'semana':
-        return alerts.filter((a) => a.due_date >= today && a.due_date <= weekEnd)
+        list = alerts.filter((a) => a.due_date >= today && a.due_date <= weekEnd)
+        break
       case 'mes':
-        return alerts.filter((a) => a.due_date >= today && a.due_date <= monthEnd)
+        list = alerts.filter((a) => a.due_date >= today && a.due_date <= monthEnd)
+        break
       case 'historicas':
-        return alerts.filter((a) => a.due_date < today)
+        list = alerts.filter((a) => a.due_date < today)
+        break
     }
+    return [...list].sort((a, b) =>
+      a.completed === b.completed ? 0 : a.completed ? 1 : -1,
+    )
   }, [alerts, tab, today, weekEnd, monthEnd])
+
+  const pendingCount = filtered.filter((a) => !a.completed).length
 
   const tabs: Array<{ key: Tab; label: string }> = [
     { key: 'hoy', label: 'Hoy' },
@@ -76,6 +92,14 @@ export function AlertsPanel({ alerts, loading, onSelectAlert }: Props) {
         ))}
       </div>
 
+      {!loading && filtered.length > 0 && (
+        <p className="mt-3 text-sm text-slate-500">
+          {pendingCount === 0
+            ? '¡Todo listo! No quedan alertas pendientes en esta vista.'
+            : `${pendingCount} pendiente${pendingCount === 1 ? '' : 's'} de ${filtered.length}.`}
+        </p>
+      )}
+
       {loading ? (
         <p className="mt-8 text-sm text-slate-500">Cargando alertas…</p>
       ) : filtered.length === 0 ? (
@@ -83,23 +107,48 @@ export function AlertsPanel({ alerts, loading, onSelectAlert }: Props) {
           No hay alertas {tab === 'hoy' ? 'para hoy' : `en esta vista`}.
         </p>
       ) : (
-        <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
+        <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3">
           {filtered.map((alert) => (
-            <button
+            <div
               key={alert.id}
-              onClick={() => onSelectAlert(alert)}
-              className={`flex aspect-square flex-col justify-between rounded-xl p-3 text-left text-white shadow-sm transition hover:brightness-110 ${ALERT_TYPE_META[alert.type].badge}`}
+              className={`relative flex aspect-square flex-col justify-between rounded-2xl p-4 text-white shadow-sm transition ${ALERT_TYPE_META[alert.type].badge} ${
+                alert.completed ? 'opacity-40' : ''
+              }`}
             >
-              <span className="text-xs font-semibold uppercase tracking-wide opacity-90">
-                {ALERT_TYPE_META[alert.type].label}
-              </span>
-              <span className="line-clamp-3 text-sm font-medium">
-                {alert.patient?.full_name ?? 'Paciente'}
-              </span>
-              <span className="text-xs opacity-90">
-                {formatDate(alert.due_date)}
-              </span>
-            </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onToggleComplete(alert)
+                }}
+                aria-label={
+                  alert.completed
+                    ? 'Marcar como pendiente'
+                    : 'Marcar como completada'
+                }
+                className={`absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full border-2 border-white/80 text-base transition ${
+                  alert.completed ? 'bg-white text-teal-700' : 'text-transparent'
+                }`}
+              >
+                ✓
+              </button>
+
+              <button
+                onClick={() => onSelectAlert(alert)}
+                className="flex flex-1 flex-col justify-between text-left"
+              >
+                <span className="pr-8 text-xs font-semibold uppercase tracking-wide opacity-90">
+                  {ALERT_TYPE_META[alert.type].label}
+                </span>
+                <span
+                  className={`line-clamp-3 text-base font-semibold ${alert.completed ? 'line-through' : ''}`}
+                >
+                  {alert.patient?.full_name ?? 'Paciente'}
+                </span>
+                <span className="text-sm opacity-90">
+                  {formatDate(alert.due_date)}
+                </span>
+              </button>
+            </div>
           ))}
         </div>
       )}

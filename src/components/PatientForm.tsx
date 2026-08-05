@@ -5,7 +5,6 @@ import { emptyPatientInput } from '../types/patient'
 import { SegmentedToggle } from './SegmentedToggle'
 import { DiagnosisListEditor } from './DiagnosisListEditor'
 import { SurgeriesEditor } from './SurgeriesEditor'
-import { PatientAlerts } from './PatientAlerts'
 
 interface Props {
   initial?: Patient
@@ -258,14 +257,6 @@ export function PatientForm({ initial, onSave, onCancel }: Props) {
           />
         </div>
       </div>
-
-      {initial ? (
-        <PatientAlerts patientId={initial.id} />
-      ) : (
-        <p className="text-sm text-slate-500">
-          Podrás agregar alertas después de guardar el paciente.
-        </p>
-      )}
 
       <div className="flex justify-end gap-3">
         <button
