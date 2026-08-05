@@ -125,7 +125,7 @@ function App() {
               alt=""
               className="h-10 w-10 shrink-0 rounded-2xl shadow-sm"
             />
-            <h1 className="font-display text-2xl font-bold tracking-tight text-ink-900">
+            <h1 className="font-display text-xl font-bold tracking-tight text-ink-900">
               Navegación
             </h1>
           </div>

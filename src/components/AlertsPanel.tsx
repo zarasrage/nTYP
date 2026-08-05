@@ -139,10 +139,14 @@ export function AlertsPanel({
   const [tab, setTab] = useState<Tab>('hoy')
   const [selectedType, setSelectedType] = useState<AlertType | null>(null)
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
+  const [weekSelection, setWeekSelection] = useState<{ date: string; type: AlertType } | null>(
+    null,
+  )
 
   useEffect(() => {
     setSelectedType(null)
     setSelectedDate(null)
+    setWeekSelection(null)
   }, [tab])
 
   const today = todayISO()
@@ -224,58 +228,108 @@ export function AlertsPanel({
       </div>
 
       {tab === 'semana' ? (
-        <div className="mt-5 animate-rise-in">
-          {weekDays.every((d) => (alertsByDate.get(d) ?? []).length === 0) ? (
-            <div className="rounded-3xl border border-dashed border-cream-200 bg-white/60 px-6 py-12 text-center">
-              <p className="font-display text-lg text-ink-700">
-                No hay alertas esta semana
-              </p>
-              <p className="mt-1 text-sm text-ink-500">
-                Disfruta el silencio mientras dure.
-              </p>
+        weekSelection ? (
+          <div className="mt-5 animate-rise-in">
+            <button
+              onClick={() => setWeekSelection(null)}
+              className="mb-4 inline-flex items-center gap-1.5 text-sm font-semibold text-lime-700 hover:text-lime-800"
+            >
+              <ArrowLeftIcon className="h-4 w-4" />
+              Volver a la semana
+            </button>
+            <div className="mb-4 flex items-center gap-2.5">
+              <span
+                className={`grid h-9 w-9 place-items-center rounded-xl ${ALERT_TYPE_META[weekSelection.type].solid}`}
+              >
+                {(() => {
+                  const Icon = ALERT_TYPE_META[weekSelection.type].Icon
+                  return <Icon className="h-5 w-5 text-white" />
+                })()}
+              </span>
+              <div>
+                <h3 className="font-display text-xl font-semibold text-ink-900">
+                  {ALERT_TYPE_META[weekSelection.type].label}
+                </h3>
+                <p className="text-sm text-ink-500">{formatDate(weekSelection.date)}</p>
+              </div>
             </div>
-          ) : (
-            <div className="divide-y divide-cream-200 rounded-3xl border border-cream-200 bg-white/60">
-              {weekDays.map((date, i) => {
-                const items = [...(alertsByDate.get(date) ?? [])].sort((a, b) =>
-                  a.completed === b.completed ? 0 : a.completed ? 1 : -1,
-                )
-                const isToday = date === today
-                return (
-                  <div key={date} className="p-4">
-                    <div className="mb-3 flex items-baseline gap-2">
-                      <h4
-                        className={`font-display text-lg font-semibold ${isToday ? 'text-lime-700' : 'text-ink-900'}`}
-                      >
-                        {WEEKDAY_NAMES[i]}
-                      </h4>
-                      <span className="text-sm text-ink-500">{formatDate(date)}</span>
-                      {isToday && (
-                        <span className="rounded-full bg-lime-100 px-2 py-0.5 text-xs font-semibold text-lime-700">
-                          Hoy
-                        </span>
+            <ul className="space-y-3">
+              {(alertsByDate.get(weekSelection.date) ?? [])
+                .filter((a) => a.type === weekSelection.type)
+                .sort((a, b) => (a.completed === b.completed ? 0 : a.completed ? 1 : -1))
+                .map((alert) => (
+                  <AlertRow
+                    key={alert.id}
+                    alert={alert}
+                    onSelectAlert={onSelectAlert}
+                    onToggleComplete={onToggleComplete}
+                  />
+                ))}
+            </ul>
+          </div>
+        ) : (
+          <div className="mt-5 animate-rise-in">
+            {weekDays.every((d) => (alertsByDate.get(d) ?? []).length === 0) ? (
+              <div className="rounded-3xl border border-dashed border-cream-200 bg-white/60 px-6 py-12 text-center">
+                <p className="font-display text-lg text-ink-700">
+                  No hay alertas esta semana
+                </p>
+                <p className="mt-1 text-sm text-ink-500">
+                  Disfruta el silencio mientras dure.
+                </p>
+              </div>
+            ) : (
+              <div className="divide-y divide-cream-200 rounded-3xl border border-cream-200 bg-white/60">
+                {weekDays.map((date, i) => {
+                  const items = alertsByDate.get(date) ?? []
+                  const dayGroups = ALERT_TYPES.map((type) => ({
+                    type,
+                    items: items.filter((a) => a.type === type),
+                  })).filter((g) => g.items.length > 0)
+                  const isToday = date === today
+                  return (
+                    <div key={date} className="p-4">
+                      <div className="mb-3 flex items-baseline gap-2">
+                        <h4
+                          className={`font-display text-lg font-semibold ${isToday ? 'text-lime-700' : 'text-ink-900'}`}
+                        >
+                          {WEEKDAY_NAMES[i]}
+                        </h4>
+                        <span className="text-sm text-ink-500">{formatDate(date)}</span>
+                        {isToday && (
+                          <span className="rounded-full bg-lime-100 px-2 py-0.5 text-xs font-semibold text-lime-700">
+                            Hoy
+                          </span>
+                        )}
+                      </div>
+                      {dayGroups.length === 0 ? (
+                        <p className="text-sm text-ink-500">Sin alertas.</p>
+                      ) : (
+                        <div className="flex flex-wrap gap-2.5">
+                          {dayGroups.map((g) => {
+                            const meta = ALERT_TYPE_META[g.type]
+                            return (
+                              <button
+                                key={g.type}
+                                onClick={() => setWeekSelection({ date, type: g.type })}
+                                className={`flex h-16 w-16 flex-col items-center justify-center gap-0.5 rounded-2xl transition hover:-translate-y-0.5 ${meta.soft}`}
+                              >
+                                <meta.Icon className={`h-4 w-4 ${meta.text}`} />
+                                <span className={`font-display text-xl font-bold leading-none ${meta.text}`}>
+                                  {g.items.length}
+                                </span>
+                              </button>
+                            )
+                          })}
+                        </div>
                       )}
                     </div>
-                    {items.length === 0 ? (
-                      <p className="text-sm text-ink-500">Sin alertas.</p>
-                    ) : (
-                      <ul className="space-y-3">
-                        {items.map((alert) => (
-                          <AlertRow
-                            key={alert.id}
-                            alert={alert}
-                            onSelectAlert={onSelectAlert}
-                            onToggleComplete={onToggleComplete}
-                          />
-                        ))}
-                      </ul>
-                    )}
-                  </div>
-                )
-              })}
-            </div>
-          )}
-        </div>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+        )
       ) : tab === 'mes' ? (
         selectedDate ? (
           <div className="mt-5 animate-rise-in">
