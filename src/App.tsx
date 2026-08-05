@@ -1,7 +1,5 @@
 import { useEffect, useState } from 'react'
 import { supabase } from './lib/supabaseClient'
-import { useAuth } from './lib/useAuth'
-import { Login } from './components/Login'
 import { PatientList } from './components/PatientList'
 import { PatientForm } from './components/PatientForm'
 import type { Patient, PatientInput } from './types/patient'
@@ -9,16 +7,14 @@ import type { Patient, PatientInput } from './types/patient'
 type View = { name: 'list' } | { name: 'new' } | { name: 'edit'; patient: Patient }
 
 function App() {
-  const { session, loading: authLoading } = useAuth()
   const [patients, setPatients] = useState<Patient[]>([])
   const [loadingPatients, setLoadingPatients] = useState(true)
   const [view, setView] = useState<View>({ name: 'list' })
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    if (!session) return
     loadPatients()
-  }, [session])
+  }, [])
 
   async function loadPatients() {
     setLoadingPatients(true)
@@ -58,31 +54,13 @@ function App() {
     setView({ name: 'list' })
   }
 
-  if (authLoading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center text-sm text-slate-500">
-        Cargando…
-      </div>
-    )
-  }
-
-  if (!session) {
-    return <Login />
-  }
-
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
       <header className="border-b border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
-        <div className="mx-auto flex max-w-3xl items-center justify-between px-4 py-4">
+        <div className="mx-auto max-w-3xl px-4 py-4">
           <h1 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
             Registro de Pacientes
           </h1>
-          <button
-            onClick={() => supabase.auth.signOut()}
-            className="text-sm text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
-          >
-            Cerrar sesión
-          </button>
         </div>
       </header>
 

@@ -8,6 +8,8 @@ interface Props {
   onNew: () => void
 }
 
+type Tab = 'seguimiento' | 'todos'
+
 function calcAge(birthDate: string | null): number | null {
   if (!birthDate) return null
   const dob = new Date(birthDate)
@@ -17,21 +19,53 @@ function calcAge(birthDate: string | null): number | null {
 }
 
 export function PatientList({ patients, loading, onSelect, onNew }: Props) {
+  const [tab, setTab] = useState<Tab>('seguimiento')
   const [query, setQuery] = useState('')
 
+  const inFollowupCount = useMemo(
+    () => patients.filter((p) => p.in_followup).length,
+    [patients],
+  )
+
   const filtered = useMemo(() => {
+    const byTab =
+      tab === 'seguimiento' ? patients.filter((p) => p.in_followup) : patients
+
     const q = query.trim().toLowerCase()
-    if (!q) return patients
-    return patients.filter(
+    if (!q) return byTab
+    return byTab.filter(
       (p) =>
         p.full_name.toLowerCase().includes(q) ||
         p.document_id?.toLowerCase().includes(q),
     )
-  }, [patients, query])
+  }, [patients, tab, query])
 
   return (
     <div>
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex gap-1 border-b border-slate-200 dark:border-slate-800">
+        <button
+          onClick={() => setTab('seguimiento')}
+          className={`px-3 py-2 text-sm font-medium border-b-2 -mb-px transition ${
+            tab === 'seguimiento'
+              ? 'border-teal-700 text-teal-700 dark:text-teal-400'
+              : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+          }`}
+        >
+          En seguimiento ({inFollowupCount})
+        </button>
+        <button
+          onClick={() => setTab('todos')}
+          className={`px-3 py-2 text-sm font-medium border-b-2 -mb-px transition ${
+            tab === 'todos'
+              ? 'border-teal-700 text-teal-700 dark:text-teal-400'
+              : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+          }`}
+        >
+          Todos los pacientes ({patients.length})
+        </button>
+      </div>
+
+      <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <input
           type="search"
           placeholder="Buscar por nombre o RUT/documento…"
@@ -53,7 +87,9 @@ export function PatientList({ patients, loading, onSelect, onNew }: Props) {
         <p className="mt-8 text-sm text-slate-500">
           {patients.length === 0
             ? 'Aún no hay pacientes registrados.'
-            : 'Sin resultados para tu búsqueda.'}
+            : tab === 'seguimiento'
+              ? 'No hay pacientes en seguimiento por ahora.'
+              : 'Sin resultados para tu búsqueda.'}
         </p>
       ) : (
         <ul className="mt-6 divide-y divide-slate-200 rounded-xl border border-slate-200 dark:divide-slate-800 dark:border-slate-800">
@@ -68,6 +104,11 @@ export function PatientList({ patients, loading, onSelect, onNew }: Props) {
                   <div>
                     <p className="font-medium text-slate-900 dark:text-slate-100">
                       {p.full_name}
+                      {tab === 'todos' && !p.in_followup && (
+                        <span className="ml-2 rounded-full bg-slate-100 px-2 py-0.5 text-xs font-normal text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+                          Fuera de seguimiento
+                        </span>
+                      )}
                     </p>
                     <p className="text-sm text-slate-500">
                       {[

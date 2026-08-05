@@ -1,25 +1,25 @@
 # Registro de Pacientes (PWA)
 
-App instalable (PWA) para registrar y editar fichas de pacientes, con
-autenticación, base de datos en Supabase y una función de IA que ayuda a
-prellenar el formulario a partir de una foto (carnet, ficha, etc.).
+App instalable (PWA) de un solo uso para registrar y editar fichas de
+pacientes, con base de datos en Supabase y una función de IA que ayuda a
+prellenar el formulario a partir de una foto (carnet, ficha, etc.). No tiene
+login: se abre directo a la lista de pacientes.
+
+La pantalla principal muestra por defecto los pacientes marcados como **"En
+seguimiento"**; una segunda pestaña, **"Todos los pacientes"**, muestra el
+listado completo, incluyendo a quienes ya no están en seguimiento activo.
 
 Stack: React + TypeScript + Vite, Tailwind CSS, `vite-plugin-pwa`, Supabase
-(Auth + Postgres con RLS), función serverless en Netlify que llama a la API
-de Claude (Anthropic) para leer la imagen.
+(Postgres con RLS), función serverless en Netlify que llama a la API de
+Claude (Anthropic) para leer la imagen.
 
 ## 1. Crear el proyecto en Supabase
 
 1. Crea un proyecto en [app.supabase.com](https://app.supabase.com).
 2. Ve a **SQL Editor** y ejecuta el contenido de [`supabase/schema.sql`](./supabase/schema.sql).
-   Esto crea la tabla `patients`, un trigger de `updated_at` y las políticas
-   de Row Level Security (por defecto: cualquier usuario autenticado puede
-   leer/crear/editar/borrar pacientes — ajusta las políticas si necesitas
-   separar por roles o consultorios).
-3. En **Authentication > Providers**, deja habilitado "Email" (es lo que usa
-   la app). Si no quieres verificación por correo mientras pruebas, puedes
-   desactivar "Confirm email" en Authentication > Settings.
-4. En **Project Settings > API**, copia el `Project URL` y el `anon public key`.
+   Esto crea la tabla `patients` (con el campo `in_followup`), un trigger de
+   `updated_at` y las políticas de Row Level Security.
+3. En **Project Settings > API**, copia el `Project URL` y el `anon public key`.
 
 ## 2. Variables de entorno
 
@@ -30,7 +30,7 @@ cp .env.example .env
 Completa:
 
 - `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY`: del paso anterior. Se usan
-  en el cliente (son públicas por diseño; los datos quedan protegidos por RLS).
+  en el cliente.
 - `ANTHROPIC_API_KEY`: solo la usa la función serverless
   `netlify/functions/extract-patient.ts` para leer la foto del documento.
   Consíguela en [console.anthropic.com](https://console.anthropic.com/settings/keys).
@@ -59,6 +59,10 @@ IA, `npm run dev` también funciona.
    `ANTHROPIC_API_KEY`).
 4. Deploy. La app queda instalable como PWA (ícono, `manifest.json` y
    service worker generados por `vite-plugin-pwa`).
+5. **Recomendado**: como la app no tiene login, protege la URL con la
+   contraseña de sitio de Netlify (Site settings → Sharing/Visitor access →
+   "Password protection") para que solo tú puedas entrar a ver los datos de
+   pacientes.
 
 ## Funcionalidad de foto
 
@@ -74,8 +78,8 @@ especialmente con letra manuscrita o fotos de baja calidad.
 
 ```
 src/
-  components/    Login, lista y formulario de pacientes
-  lib/           cliente de Supabase, hook de sesión
+  components/    lista y formulario de pacientes
+  lib/           cliente de Supabase
   types/         tipos de Patient
 netlify/functions/
   extract-patient.ts   llama a la API de Claude para leer la foto
@@ -85,11 +89,9 @@ supabase/
 
 ## Notas de seguridad
 
-- Los datos de pacientes son sensibles: no se almacena la contraseña de los
-  usuarios en la app (delegado a Supabase Auth), y la tabla `patients` solo
-  es accesible para usuarios autenticados vía RLS.
-- Revisa y ajusta las políticas de RLS en `supabase/schema.sql` según tus
-  requisitos de cumplimiento (por ejemplo, si necesitas registrar auditoría
-  de accesos o restringir por consultorio/usuario).
+- La app no tiene autenticación: cualquiera con la URL desplegada y la anon
+  key (pública en el bundle del cliente) puede leer y editar los datos de
+  pacientes. Protege la URL con la contraseña de sitio de Netlify (ver paso
+  4.5) o con otra capa de acceso si vas a exponerla en internet.
 - La clave de Anthropic vive solo en el entorno de Netlify, nunca en el
   bundle del cliente.

@@ -55,6 +55,7 @@ export function PatientForm({ initial, onSave, onCancel }: Props) {
           blood_type: initial.blood_type ?? '',
           allergies: initial.allergies ?? '',
           medical_notes: initial.medical_notes ?? '',
+          in_followup: initial.in_followup,
         }
       : emptyPatientInput,
   )
@@ -142,6 +143,18 @@ export function PatientForm({ initial, onSave, onCancel }: Props) {
           {scanError && <p className="text-sm text-red-600">{scanError}</p>}
         </div>
       </div>
+
+      <label className="flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-700">
+        <input
+          type="checkbox"
+          checked={form.in_followup}
+          onChange={(e) => update('in_followup', e.target.checked)}
+          className="h-4 w-4 rounded border-slate-300 text-teal-700 focus:ring-teal-600"
+        />
+        <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+          Paciente en seguimiento
+        </span>
+      </label>
 
       <div>
         <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">

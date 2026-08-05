@@ -4,7 +4,6 @@ export interface Patient {
   id: string
   created_at: string
   updated_at: string
-  created_by: string | null
 
   full_name: string
   document_id: string | null
@@ -20,12 +19,11 @@ export interface Patient {
   blood_type: string | null
   allergies: string | null
   medical_notes: string | null
+
+  in_followup: boolean
 }
 
-export type PatientInput = Omit<
-  Patient,
-  'id' | 'created_at' | 'updated_at' | 'created_by'
->
+export type PatientInput = Omit<Patient, 'id' | 'created_at' | 'updated_at'>
 
 export const emptyPatientInput: PatientInput = {
   full_name: '',
@@ -40,4 +38,5 @@ export const emptyPatientInput: PatientInput = {
   blood_type: '',
   allergies: '',
   medical_notes: '',
+  in_followup: true,
 }
