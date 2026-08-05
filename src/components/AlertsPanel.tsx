@@ -14,15 +14,29 @@ interface Props {
 type Tab = 'hoy' | 'semana' | 'mes' | 'historicas'
 
 const WEEKDAY_LABELS = ['L', 'M', 'M', 'J', 'V', 'S', 'D']
+const WEEKDAY_NAMES = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes']
 
 function todayISO() {
   return new Date().toISOString().slice(0, 10)
 }
 
-function addDaysISO(days: number) {
-  const d = new Date()
-  d.setDate(d.getDate() + days)
+function toISO(d: Date) {
   return d.toISOString().slice(0, 10)
+}
+
+function getWorkWeekDays(): string[] {
+  const now = new Date()
+  const mondayOffset = (now.getDay() + 6) % 7 // 0 = lunes
+  const monday = new Date(now)
+  monday.setDate(now.getDate() - mondayOffset)
+
+  const days: string[] = []
+  for (let i = 0; i < 5; i++) {
+    const d = new Date(monday)
+    d.setDate(monday.getDate() + i)
+    days.push(toISO(d))
+  }
+  return days
 }
 
 function formatDate(iso: string) {
@@ -132,20 +146,18 @@ export function AlertsPanel({
   }, [tab])
 
   const today = todayISO()
-  const weekEnd = addDaysISO(7)
 
   const filtered = useMemo(() => {
     switch (tab) {
       case 'hoy':
         return alerts.filter((a) => a.due_date === today)
       case 'semana':
-        return alerts.filter((a) => a.due_date >= today && a.due_date <= weekEnd)
       case 'mes':
         return []
       case 'historicas':
         return alerts.filter((a) => a.due_date < today)
     }
-  }, [alerts, tab, today, weekEnd])
+  }, [alerts, tab, today])
 
   const groups = useMemo(() => {
     return ALERT_TYPES.map((type) => {
@@ -169,6 +181,7 @@ export function AlertsPanel({
     : []
 
   const monthCells = useMemo(() => getMonthCells(), [])
+  const weekDays = useMemo(() => getWorkWeekDays(), [])
   const alertsByDate = useMemo(() => {
     const map = new Map<string, Alert[]>()
     for (const a of alerts) {
@@ -210,7 +223,60 @@ export function AlertsPanel({
         ))}
       </div>
 
-      {tab === 'mes' ? (
+      {tab === 'semana' ? (
+        <div className="mt-5 animate-rise-in">
+          {weekDays.every((d) => (alertsByDate.get(d) ?? []).length === 0) ? (
+            <div className="rounded-3xl border border-dashed border-cream-200 bg-white/60 px-6 py-12 text-center">
+              <p className="font-display text-lg text-ink-700">
+                No hay alertas esta semana
+              </p>
+              <p className="mt-1 text-sm text-ink-500">
+                Disfruta el silencio mientras dure.
+              </p>
+            </div>
+          ) : (
+            <div className="divide-y divide-cream-200 rounded-3xl border border-cream-200 bg-white/60">
+              {weekDays.map((date, i) => {
+                const items = [...(alertsByDate.get(date) ?? [])].sort((a, b) =>
+                  a.completed === b.completed ? 0 : a.completed ? 1 : -1,
+                )
+                const isToday = date === today
+                return (
+                  <div key={date} className="p-4">
+                    <div className="mb-3 flex items-baseline gap-2">
+                      <h4
+                        className={`font-display text-lg font-semibold ${isToday ? 'text-lime-700' : 'text-ink-900'}`}
+                      >
+                        {WEEKDAY_NAMES[i]}
+                      </h4>
+                      <span className="text-sm text-ink-500">{formatDate(date)}</span>
+                      {isToday && (
+                        <span className="rounded-full bg-lime-100 px-2 py-0.5 text-xs font-semibold text-lime-700">
+                          Hoy
+                        </span>
+                      )}
+                    </div>
+                    {items.length === 0 ? (
+                      <p className="text-sm text-ink-500">Sin alertas.</p>
+                    ) : (
+                      <ul className="space-y-3">
+                        {items.map((alert) => (
+                          <AlertRow
+                            key={alert.id}
+                            alert={alert}
+                            onSelectAlert={onSelectAlert}
+                            onToggleComplete={onToggleComplete}
+                          />
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </div>
+      ) : tab === 'mes' ? (
         selectedDate ? (
           <div className="mt-5 animate-rise-in">
             <button
