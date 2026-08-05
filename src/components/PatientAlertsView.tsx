@@ -1,7 +1,10 @@
 import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import type { Alert, AlertType, Patient } from '../types/patient'
-import { ALERT_TYPE_META, ALERT_TYPES } from '../types/patient'
+import { ALERT_TYPES } from '../types/patient'
+import { ALERT_TYPE_META } from '../lib/alertMeta'
+import { inputClass } from '../lib/formStyles'
+import { ArrowLeftIcon, CheckIcon, PencilIcon, PlusIcon, TrashIcon } from './icons'
 
 interface Props {
   patient: Patient
@@ -28,6 +31,18 @@ function relativeLabel(dueDate: string) {
 function formatDate(iso: string) {
   const [y, m, d] = iso.split('-')
   return `${d}-${m}-${y}`
+}
+
+const AVATAR_STYLES = [
+  'bg-lime-100 text-lime-700',
+  'bg-blossom-100 text-blossom-600',
+  'bg-lavender-100 text-lavender-700',
+  'bg-peach-100 text-peach-700',
+]
+
+function avatarStyle(name: string) {
+  const sum = [...name].reduce((acc, ch) => acc + ch.charCodeAt(0), 0)
+  return AVATAR_STYLES[sum % AVATAR_STYLES.length]
 }
 
 export function PatientAlertsView({ patient, onBack, onEdit }: Props) {
@@ -110,132 +125,142 @@ export function PatientAlertsView({ patient, onBack, onEdit }: Props) {
     <div>
       <button
         onClick={onBack}
-        className="mb-4 text-sm text-teal-700 hover:underline dark:text-teal-400"
+        className="mb-4 inline-flex items-center gap-1.5 text-sm font-semibold text-lime-700 hover:text-lime-800"
       >
-        ← Volver a pacientes
+        <ArrowLeftIcon className="h-4 w-4" />
+        Volver a pacientes
       </button>
 
-      <div className="flex items-start justify-between gap-3 rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
-        <div>
-          <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100">
-            {patient.full_name}
-          </h2>
-          <p className="mt-1 text-sm text-slate-500">
-            {[
-              patient.rut,
-              patient.age_at_accident !== null
-                ? `${patient.age_at_accident} años al accidente`
-                : null,
-              patient.accident_date,
-            ]
-              .filter(Boolean)
-              .join(' · ') || 'Sin datos adicionales'}
-          </p>
-          <div className="mt-2 flex flex-wrap gap-2">
-            <span
-              className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                patient.in_followup
-                  ? 'bg-teal-100 text-teal-700 dark:bg-teal-950 dark:text-teal-300'
-                  : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'
-              }`}
-            >
-              {patient.in_followup ? 'En seguimiento' : 'Fuera de seguimiento'}
-            </span>
-            {patient.hospitalized && (
-              <span className="rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700 dark:bg-blue-950 dark:text-blue-300">
-                Hospitalizado
+      <div className="flex items-start justify-between gap-3 rounded-3xl border border-cream-200 bg-white p-5 shadow-[0_10px_28px_-16px_rgba(36,31,22,0.35)]">
+        <div className="flex items-start gap-3.5">
+          <span
+            className={`grid h-14 w-14 shrink-0 place-items-center rounded-2xl font-display text-2xl font-semibold ${avatarStyle(patient.full_name)}`}
+          >
+            {patient.full_name.trim().charAt(0).toUpperCase() || '?'}
+          </span>
+          <div>
+            <h2 className="font-display text-xl font-semibold text-ink-900">
+              {patient.full_name}
+            </h2>
+            <p className="mt-0.5 text-sm text-ink-500">
+              {[
+                patient.rut,
+                patient.age_at_accident !== null
+                  ? `${patient.age_at_accident} años al accidente`
+                  : null,
+                patient.accident_date,
+              ]
+                .filter(Boolean)
+                .join(' · ') || 'Sin datos adicionales'}
+            </p>
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              <span
+                className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${
+                  patient.in_followup
+                    ? 'bg-lime-100 text-lime-700'
+                    : 'bg-cream-200 text-ink-500'
+                }`}
+              >
+                {patient.in_followup ? 'En seguimiento' : 'Fuera de seguimiento'}
               </span>
-            )}
+              {patient.hospitalized && (
+                <span className="rounded-full bg-lavender-100 px-2.5 py-0.5 text-xs font-semibold text-lavender-700">
+                  Hospitalizado
+                </span>
+              )}
+            </div>
           </div>
         </div>
         <button
           onClick={onEdit}
           aria-label="Editar paciente"
-          className="shrink-0 rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+          className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-cream-200 text-ink-500 transition hover:bg-cream-100 hover:text-lime-700"
         >
-          ✎ Editar ficha
+          <PencilIcon className="h-4 w-4" />
         </button>
       </div>
 
-      <h3 className="mt-6 mb-3 text-base font-semibold text-slate-900 dark:text-slate-100">
+      <h3 className="mb-3 mt-6 font-display text-xl font-semibold text-ink-900">
         Alertas
       </h3>
 
-      {error && <p className="mb-3 text-sm text-red-600">{error}</p>}
+      {error && <p className="mb-3 text-sm text-blossom-600">{error}</p>}
 
       {loading ? (
-        <p className="text-sm text-slate-500">Cargando alertas…</p>
+        <p className="text-sm text-ink-500">Cargando alertas…</p>
       ) : ordered.length === 0 ? (
-        <p className="text-sm text-slate-500">Sin alertas registradas.</p>
+        <p className="text-sm text-ink-500">Sin alertas registradas.</p>
       ) : (
         <ul className="space-y-3">
-          {ordered.map((a) => (
-            <li
-              key={a.id}
-              className={`flex items-center gap-4 rounded-2xl border p-4 transition ${
-                a.completed
-                  ? 'border-slate-200 bg-slate-50 opacity-60 dark:border-slate-800 dark:bg-slate-900/50'
-                  : 'border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900'
-              }`}
-            >
-              <button
-                onClick={() => toggleCompleted(a)}
-                aria-label={
-                  a.completed ? 'Marcar como pendiente' : 'Marcar como completada'
-                }
-                className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 text-base transition ${
+          {ordered.map((a) => {
+            const meta = ALERT_TYPE_META[a.type]
+            return (
+              <li
+                key={a.id}
+                className={`flex items-center gap-4 rounded-2xl border p-4 transition ${
                   a.completed
-                    ? 'border-teal-600 bg-teal-600 text-white'
-                    : 'border-slate-300 text-transparent hover:border-teal-500 dark:border-slate-600'
+                    ? 'border-cream-200 bg-white/50 opacity-60'
+                    : 'border-cream-200 bg-white shadow-[0_6px_20px_-12px_rgba(36,31,22,0.3)]'
                 }`}
               >
-                ✓
-              </button>
+                <button
+                  onClick={() => toggleCompleted(a)}
+                  aria-label={
+                    a.completed ? 'Marcar como pendiente' : 'Marcar como completada'
+                  }
+                  className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border-2 transition ${
+                    a.completed
+                      ? 'animate-pop border-lime-500 bg-lime-400 text-white'
+                      : 'border-cream-200 text-transparent hover:border-lime-400'
+                  }`}
+                >
+                  <CheckIcon className="h-4 w-4" />
+                </button>
 
-              <div className="min-w-0 flex-1">
-                <div className="flex flex-wrap items-center gap-2">
-                  <span
-                    className={`rounded-full px-2.5 py-1 text-xs font-medium text-white ${ALERT_TYPE_META[a.type].badge}`}
-                  >
-                    {ALERT_TYPE_META[a.type].label}
-                  </span>
-                  <span
-                    className={`text-sm font-medium ${a.completed ? 'text-slate-400 line-through' : 'text-slate-700 dark:text-slate-200'}`}
-                  >
-                    {formatDate(a.due_date)} · {relativeLabel(a.due_date)}
-                  </span>
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span
+                      className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold text-white ${meta.solid}`}
+                    >
+                      <meta.Icon className="h-3.5 w-3.5" />
+                      {meta.label}
+                    </span>
+                    <span
+                      className={`text-sm font-medium ${a.completed ? 'text-ink-500 line-through' : 'text-ink-700'}`}
+                    >
+                      {formatDate(a.due_date)} · {relativeLabel(a.due_date)}
+                    </span>
+                  </div>
+                  {a.note && (
+                    <p
+                      className={`mt-1 text-sm ${a.completed ? 'text-ink-500 line-through' : 'text-ink-500'}`}
+                    >
+                      {a.note}
+                    </p>
+                  )}
                 </div>
-                {a.note && (
-                  <p
-                    className={`mt-1 text-sm ${a.completed ? 'text-slate-400 line-through' : 'text-slate-500'}`}
-                  >
-                    {a.note}
-                  </p>
-                )}
-              </div>
 
-              <button
-                type="button"
-                onClick={() => removeAlert(a.id)}
-                aria-label="Quitar alerta"
-                className="shrink-0 rounded-lg px-2 py-2 text-slate-400 hover:bg-slate-100 hover:text-red-600 dark:hover:bg-slate-800"
-              >
-                ✕
-              </button>
-            </li>
-          ))}
+                <button
+                  type="button"
+                  onClick={() => removeAlert(a.id)}
+                  aria-label="Quitar alerta"
+                  className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-ink-500/70 transition hover:bg-blossom-100 hover:text-blossom-600"
+                >
+                  <TrashIcon className="h-4 w-4" />
+                </button>
+              </li>
+            )
+          })}
         </ul>
       )}
 
-      <div className="mt-5 flex flex-col gap-3 rounded-2xl border border-dashed border-slate-300 p-4 sm:flex-row sm:items-end dark:border-slate-700">
+      <div className="mt-5 flex flex-col gap-3 rounded-3xl border-2 border-dashed border-cream-200 bg-white/60 p-4 sm:flex-row sm:items-end">
         <div>
-          <label className="block text-xs font-medium text-slate-500">
-            Tipo
-          </label>
+          <label className="block text-xs font-semibold text-ink-500">Tipo</label>
           <select
             value={type}
             onChange={(e) => setType(e.target.value as AlertType)}
-            className="mt-1 rounded-lg border border-slate-300 px-2 py-2 text-sm outline-none focus:border-teal-600 focus:ring-1 focus:ring-teal-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+            className={`${inputClass} mt-1 py-2`}
           >
             {ALERT_TYPES.map((t) => (
               <option key={t} value={t}>
@@ -245,34 +270,33 @@ export function PatientAlertsView({ patient, onBack, onEdit }: Props) {
           </select>
         </div>
         <div>
-          <label className="block text-xs font-medium text-slate-500">
-            Fecha
-          </label>
+          <label className="block text-xs font-semibold text-ink-500">Fecha</label>
           <input
             type="date"
             value={dueDate}
             onChange={(e) => setDueDate(e.target.value)}
-            className="mt-1 rounded-lg border border-slate-300 px-2 py-2 text-sm outline-none focus:border-teal-600 focus:ring-1 focus:ring-teal-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+            className={`${inputClass} mt-1 py-2`}
           />
         </div>
         <div className="flex-1">
-          <label className="block text-xs font-medium text-slate-500">
+          <label className="block text-xs font-semibold text-ink-500">
             Nota (opcional)
           </label>
           <input
             type="text"
             value={note}
             onChange={(e) => setNote(e.target.value)}
-            className="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm outline-none focus:border-teal-600 focus:ring-1 focus:ring-teal-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+            className={`${inputClass} mt-1 py-2`}
           />
         </div>
         <button
           type="button"
           onClick={addAlert}
           disabled={saving}
-          className="rounded-lg bg-teal-700 px-4 py-2 text-sm font-medium text-white hover:bg-teal-800 disabled:opacity-60"
+          className="inline-flex items-center justify-center gap-1.5 whitespace-nowrap rounded-full bg-ink-900 px-4 py-2.5 text-sm font-semibold text-cream-50 shadow-sm transition hover:bg-ink-700 disabled:opacity-60"
         >
-          + Agregar alerta
+          <PlusIcon className="h-3.5 w-3.5" />
+          Agregar alerta
         </button>
       </div>
     </div>

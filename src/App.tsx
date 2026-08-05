@@ -5,6 +5,7 @@ import { PatientForm } from './components/PatientForm'
 import { PatientAlertsView } from './components/PatientAlertsView'
 import { AlertsPanel } from './components/AlertsPanel'
 import { DiagnosisAdmin } from './components/DiagnosisAdmin'
+import { PlusIcon } from './components/icons'
 import type { Alert, Patient, PatientInput } from './types/patient'
 
 type Section = 'alerts' | 'patients'
@@ -111,19 +112,26 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
-      <header className="border-b border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
-        <div className="mx-auto flex max-w-3xl items-center justify-between px-4 py-4">
-          <h1 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
-            Registro de Pacientes
-          </h1>
-          <nav className="flex gap-1 rounded-lg border border-slate-200 p-0.5 dark:border-slate-700">
+    <div className="relative min-h-screen">
+      <div className="bg-blobs" />
+
+      <header className="relative z-10 px-4 pt-5 sm:px-6">
+        <div className="mx-auto flex max-w-3xl items-center justify-between gap-3 rounded-3xl border border-white/60 bg-white/80 px-5 py-3.5 shadow-[0_8px_30px_-12px_rgba(94,168,11,0.35)] backdrop-blur-md">
+          <div className="flex items-center gap-2.5">
+            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-lime-400 to-blossom-400 shadow-inner">
+              <PlusIcon className="h-5 w-5 text-white" />
+            </span>
+            <h1 className="font-display text-xl font-semibold tracking-tight text-ink-900">
+              Registro de Pacientes
+            </h1>
+          </div>
+          <nav className="flex gap-1 rounded-full bg-cream-200/70 p-1">
             <button
               onClick={() => setSection('alerts')}
-              className={`rounded-md px-3 py-1.5 text-sm font-medium transition ${
+              className={`rounded-full px-3.5 py-1.5 text-sm font-semibold transition ${
                 section === 'alerts'
-                  ? 'bg-teal-700 text-white'
-                  : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800'
+                  ? 'bg-lime-400 text-ink-900 shadow-sm'
+                  : 'text-ink-700 hover:text-ink-900'
               }`}
             >
               Alertas
@@ -133,10 +141,10 @@ function App() {
                 setSection('patients')
                 setPatientView({ name: 'list' })
               }}
-              className={`rounded-md px-3 py-1.5 text-sm font-medium transition ${
+              className={`rounded-full px-3.5 py-1.5 text-sm font-semibold transition ${
                 section === 'patients'
-                  ? 'bg-teal-700 text-white'
-                  : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800'
+                  ? 'bg-lime-400 text-ink-900 shadow-sm'
+                  : 'text-ink-700 hover:text-ink-900'
               }`}
             >
               Pacientes
@@ -145,9 +153,9 @@ function App() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-3xl px-4 py-8">
+      <main className="relative z-10 mx-auto max-w-3xl px-4 py-8 sm:px-6">
         {error && (
-          <div className="mb-4 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700 dark:bg-red-950 dark:text-red-300">
+          <div className="mb-4 rounded-2xl border border-blossom-200 bg-blossom-50 px-4 py-3 text-sm font-medium text-blossom-700">
             {error}
           </div>
         )}
@@ -190,7 +198,7 @@ function App() {
 
         {section === 'patients' && patientView.name === 'new' && (
           <>
-            <h2 className="mb-4 text-base font-semibold text-slate-900 dark:text-slate-100">
+            <h2 className="mb-5 font-display text-2xl font-semibold text-ink-900">
               Nuevo paciente
             </h2>
             <PatientForm
@@ -202,7 +210,7 @@ function App() {
 
         {section === 'patients' && patientView.name === 'edit' && (
           <>
-            <h2 className="mb-4 text-base font-semibold text-slate-900 dark:text-slate-100">
+            <h2 className="mb-5 font-display text-2xl font-semibold text-ink-900">
               Editar paciente
             </h2>
             <PatientForm

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import type { DiagnosisCatalogItem, Patient, PatientInput } from '../types/patient'
 import { emptyPatientInput } from '../types/patient'
+import { inputClass, labelClass } from '../lib/formStyles'
 import { SegmentedToggle } from './SegmentedToggle'
 import { DiagnosisListEditor } from './DiagnosisListEditor'
 import { SurgeriesEditor } from './SurgeriesEditor'
@@ -105,14 +106,14 @@ export function PatientForm({ initial, onSave, onCancel }: Props) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      <div className="rounded-xl border border-dashed border-teal-300 bg-teal-50 p-4 dark:border-teal-800 dark:bg-teal-950/40">
-        <p className="text-sm font-medium text-teal-900 dark:text-teal-200">
-          Completar con foto (carnet u otro documento)
+    <form onSubmit={handleSubmit} className="space-y-5">
+      <div className="rounded-3xl border-2 border-dashed border-blossom-300 bg-blossom-50 p-5">
+        <p className="font-display text-base font-semibold text-blossom-700">
+          Completar con foto
         </p>
-        <p className="mt-1 text-xs text-teal-800/80 dark:text-teal-300/80">
-          Toma o sube una foto y se intentarán prellenar nombre, RUT y sexo.
-          Siempre revisa los datos antes de guardar.
+        <p className="mt-1 text-sm text-blossom-700/80">
+          Toma o sube una foto de un documento y se intentarán prellenar
+          nombre, RUT y sexo. Siempre revisa los datos antes de guardar.
         </p>
         <div className="mt-3 flex items-center gap-3">
           <input
@@ -126,50 +127,44 @@ export function PatientForm({ initial, onSave, onCancel }: Props) {
           />
           <label
             htmlFor="photo-input"
-            className="cursor-pointer rounded-lg bg-teal-700 px-3 py-2 text-sm font-medium text-white hover:bg-teal-800"
+            className="cursor-pointer rounded-full bg-blossom-500 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blossom-600"
           >
             {scanning ? 'Analizando foto…' : 'Usar foto'}
           </label>
-          {scanError && <p className="text-sm text-red-600">{scanError}</p>}
+          {scanError && <p className="text-sm text-blossom-700">{scanError}</p>}
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 rounded-3xl border border-cream-200 bg-white/70 p-4 sm:grid-cols-2">
         <div className="sm:col-span-2">
-          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
-            Nombre completo
-          </label>
+          <label className={labelClass}>Nombre completo</label>
           <input
             type="text"
             required
             value={form.full_name}
             onChange={(e) => update('full_name', e.target.value)}
-            className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-teal-600 focus:ring-1 focus:ring-teal-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+            className={`${inputClass} mt-1.5`}
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
-            RUT
-          </label>
+          <label className={labelClass}>RUT</label>
           <input
             type="text"
             value={form.rut ?? ''}
             onChange={(e) => update('rut', e.target.value)}
-            className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-teal-600 focus:ring-1 focus:ring-teal-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+            className={`${inputClass} mt-1.5`}
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
-            Sexo
-          </label>
+          <label className={labelClass}>Sexo</label>
           <select
             value={form.sex ?? ''}
             onChange={(e) =>
               update('sex', (e.target.value || null) as PatientInput['sex'])
             }
-            className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-teal-600 focus:ring-1 focus:ring-teal-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+            className={`${inputClass} mt-1.5`}
           >
             <option value="">Sin especificar</option>
             <option value="F">Femenino</option>
@@ -179,9 +174,7 @@ export function PatientForm({ initial, onSave, onCancel }: Props) {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
-            Edad (al accidente)
-          </label>
+          <label className={labelClass}>Edad (al accidente)</label>
           <input
             type="number"
             min={0}
@@ -192,19 +185,17 @@ export function PatientForm({ initial, onSave, onCancel }: Props) {
                 e.target.value === '' ? null : Number(e.target.value),
               )
             }
-            className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-teal-600 focus:ring-1 focus:ring-teal-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+            className={`${inputClass} mt-1.5`}
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
-            Fecha accidente
-          </label>
+          <label className={labelClass}>Fecha accidente</label>
           <input
             type="date"
             value={form.accident_date ?? ''}
             onChange={(e) => update('accident_date', e.target.value)}
-            className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-teal-600 focus:ring-1 focus:ring-teal-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+            className={`${inputClass} mt-1.5`}
           />
         </div>
       </div>
@@ -232,11 +223,9 @@ export function PatientForm({ initial, onSave, onCancel }: Props) {
         onChange={(entries) => update('surgeries', entries)}
       />
 
-      <div className="flex flex-wrap gap-6">
+      <div className="flex flex-wrap gap-6 rounded-3xl border border-cream-200 bg-white/70 p-4">
         <div>
-          <p className="mb-1 text-sm font-medium text-slate-700 dark:text-slate-300">
-            Condición
-          </p>
+          <p className="mb-1.5 text-sm font-semibold text-ink-700">Condición</p>
           <SegmentedToggle
             value={form.hospitalized}
             onChange={(v) => update('hospitalized', v)}
@@ -246,9 +235,7 @@ export function PatientForm({ initial, onSave, onCancel }: Props) {
         </div>
 
         <div>
-          <p className="mb-1 text-sm font-medium text-slate-700 dark:text-slate-300">
-            Seguimiento
-          </p>
+          <p className="mb-1.5 text-sm font-semibold text-ink-700">Seguimiento</p>
           <SegmentedToggle
             value={form.in_followup}
             onChange={(v) => update('in_followup', v)}
@@ -262,14 +249,14 @@ export function PatientForm({ initial, onSave, onCancel }: Props) {
         <button
           type="button"
           onClick={onCancel}
-          className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+          className="rounded-full border border-cream-200 bg-white px-5 py-2.5 text-sm font-semibold text-ink-700 transition hover:bg-cream-100"
         >
           Cancelar
         </button>
         <button
           type="submit"
           disabled={saving}
-          className="rounded-lg bg-teal-700 px-4 py-2 text-sm font-medium text-white hover:bg-teal-800 disabled:opacity-60"
+          className="rounded-full bg-ink-900 px-5 py-2.5 text-sm font-semibold text-cream-50 shadow-[0_10px_20px_-8px_rgba(36,31,22,0.5)] transition hover:-translate-y-0.5 hover:bg-ink-700 disabled:opacity-60"
         >
           {saving ? 'Guardando…' : 'Guardar paciente'}
         </button>

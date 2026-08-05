@@ -15,8 +15,8 @@ export default defineConfig({
         name: 'Registro de Pacientes',
         short_name: 'Pacientes',
         description: 'App para registrar y editar fichas de pacientes',
-        theme_color: '#5EA80B',
-        background_color: '#ffffff',
+        theme_color: '#9ae547',
+        background_color: '#fffbf2',
         display: 'standalone',
         start_url: '/',
         scope: '/',
@@ -48,6 +48,19 @@ export default defineConfig({
           {
             urlPattern: /^https:\/\/.*\.supabase\.co\/.*/i,
             handler: 'NetworkOnly',
+          },
+          {
+            urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
+            handler: 'CacheFirst',
+            options: { cacheName: 'google-fonts-stylesheets' },
+          },
+          {
+            urlPattern: /^https:\/\/fonts\.gstatic\.com\/.*/i,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'google-fonts-webfonts',
+              expiration: { maxEntries: 20, maxAgeSeconds: 60 * 60 * 24 * 365 },
+            },
           },
         ],
       },

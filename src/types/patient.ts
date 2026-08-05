@@ -71,28 +71,6 @@ export interface Alert {
 
 export type AlertInput = Omit<Alert, 'id' | 'created_at' | 'patient'>
 
-export const ALERT_TYPE_META: Record<
-  AlertType,
-  { label: string; badge: string }
-> = {
-  seguimiento: {
-    label: 'Alerta de seguimiento',
-    badge: 'bg-teal-600',
-  },
-  curacion: {
-    label: 'Alerta de curación',
-    badge: 'bg-amber-500',
-  },
-  control: {
-    label: 'Alerta de control',
-    badge: 'bg-blue-600',
-  },
-  cultivos_biopsia: {
-    label: 'Alerta de cultivos o biopsia',
-    badge: 'bg-purple-600',
-  },
-}
-
 export const ALERT_TYPES: AlertType[] = [
   'seguimiento',
   'curacion',

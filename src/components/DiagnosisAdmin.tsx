@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import type { DiagnosisCatalogItem } from '../types/patient'
+import { inputClass } from '../lib/formStyles'
+import { ArrowLeftIcon, PlusIcon } from './icons'
 
 interface Props {
   onBack: () => void
@@ -61,20 +63,21 @@ export function DiagnosisAdmin({ onBack }: Props) {
     <div>
       <button
         onClick={onBack}
-        className="mb-4 text-sm text-teal-700 hover:underline dark:text-teal-400"
+        className="mb-4 inline-flex items-center gap-1.5 text-sm font-semibold text-lime-700 hover:text-lime-800"
       >
-        ← Volver a pacientes
+        <ArrowLeftIcon className="h-4 w-4" />
+        Volver a pacientes
       </button>
 
-      <h2 className="mb-1 text-base font-semibold text-slate-900 dark:text-slate-100">
+      <h2 className="mb-1 font-display text-xl font-semibold text-ink-900">
         Gestionar diagnósticos
       </h2>
-      <p className="mb-4 text-sm text-slate-500">
+      <p className="mb-4 text-sm text-ink-500">
         Diagnósticos disponibles en el selector del formulario de paciente.
         Desactivar uno no borra los registros de pacientes que ya lo usan.
       </p>
 
-      {error && <p className="mb-3 text-sm text-red-600">{error}</p>}
+      {error && <p className="mb-3 text-sm text-blossom-600">{error}</p>}
 
       <div className="flex gap-2">
         <input
@@ -82,38 +85,37 @@ export function DiagnosisAdmin({ onBack }: Props) {
           value={newLabel}
           onChange={(e) => setNewLabel(e.target.value)}
           placeholder="Nuevo diagnóstico…"
-          className="flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-teal-600 focus:ring-1 focus:ring-teal-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+          className={`${inputClass} flex-1`}
         />
         <button
           onClick={addDiagnosis}
           disabled={saving}
-          className="rounded-lg bg-teal-700 px-4 py-2 text-sm font-medium text-white hover:bg-teal-800 disabled:opacity-60"
+          className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full bg-ink-900 px-4 py-2.5 text-sm font-semibold text-cream-50 shadow-sm transition hover:bg-ink-700 disabled:opacity-60"
         >
-          + Agregar
+          <PlusIcon className="h-3.5 w-3.5" />
+          Agregar
         </button>
       </div>
 
       {loading ? (
-        <p className="mt-6 text-sm text-slate-500">Cargando…</p>
+        <p className="mt-6 text-sm text-ink-500">Cargando…</p>
       ) : (
-        <ul className="mt-6 divide-y divide-slate-200 rounded-xl border border-slate-200 dark:divide-slate-800 dark:border-slate-800">
+        <ul className="mt-6 space-y-2">
           {items.map((item) => (
             <li
               key={item.id}
-              className="flex items-center justify-between px-4 py-3"
+              className="flex items-center justify-between rounded-2xl border border-cream-200 bg-white/70 px-4 py-3"
             >
               <span
                 className={
-                  item.active
-                    ? 'text-slate-900 dark:text-slate-100'
-                    : 'text-slate-400 line-through dark:text-slate-600'
+                  item.active ? 'font-medium text-ink-900' : 'text-ink-500 line-through'
                 }
               >
                 {item.label}
               </span>
               <button
                 onClick={() => toggleActive(item)}
-                className="text-sm text-teal-700 hover:underline dark:text-teal-400"
+                className="text-sm font-semibold text-blossom-600 hover:text-blossom-700 hover:underline"
               >
                 {item.active ? 'Desactivar' : 'Reactivar'}
               </button>
