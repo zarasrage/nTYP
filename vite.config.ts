@@ -15,7 +15,7 @@ export default defineConfig({
         name: 'Registro de Pacientes',
         short_name: 'Pacientes',
         description: 'App para registrar y editar fichas de pacientes',
-        theme_color: '#0f766e',
+        theme_color: '#15803d',
         background_color: '#ffffff',
         display: 'standalone',
         start_url: '/',
