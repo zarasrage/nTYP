@@ -30,12 +30,15 @@ create index if not exists patients_document_id_idx on public.patients (document
 
 -- Mantener updated_at al día en cada edición.
 create or replace function public.set_updated_at()
-returns trigger as $$
+returns trigger
+language plpgsql
+set search_path = ''
+as $$
 begin
   new.updated_at = now();
   return new;
 end;
-$$ language plpgsql;
+$$;
 
 drop trigger if exists patients_set_updated_at on public.patients;
 create trigger patients_set_updated_at
