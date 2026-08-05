@@ -1,34 +1,17 @@
-import { useRef, useState, type FormEvent } from 'react'
-import type { Patient, PatientInput } from '../types/patient'
+import { useEffect, useRef, useState, type FormEvent } from 'react'
+import { supabase } from '../lib/supabaseClient'
+import type { DiagnosisCatalogItem, Patient, PatientInput } from '../types/patient'
 import { emptyPatientInput } from '../types/patient'
+import { SegmentedToggle } from './SegmentedToggle'
+import { DiagnosisListEditor } from './DiagnosisListEditor'
+import { SurgeriesEditor } from './SurgeriesEditor'
+import { PatientAlerts } from './PatientAlerts'
 
 interface Props {
   initial?: Patient
   onSave: (input: PatientInput) => Promise<void>
   onCancel: () => void
 }
-
-const fields: Array<{
-  name: keyof PatientInput
-  label: string
-  type?: string
-  full?: boolean
-}> = [
-  { name: 'full_name', label: 'Nombre completo', full: true },
-  { name: 'document_id', label: 'RUT / documento de identidad' },
-  { name: 'birth_date', label: 'Fecha de nacimiento', type: 'date' },
-  { name: 'phone', label: 'Teléfono' },
-  { name: 'email', label: 'Correo', type: 'email' },
-  { name: 'address', label: 'Dirección', full: true },
-  { name: 'emergency_contact_name', label: 'Contacto de emergencia' },
-  {
-    name: 'emergency_contact_phone',
-    label: 'Teléfono de emergencia',
-  },
-  { name: 'blood_type', label: 'Grupo sanguíneo' },
-  { name: 'allergies', label: 'Alergias', full: true },
-  { name: 'medical_notes', label: 'Notas médicas', full: true },
-]
 
 function fileToBase64(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -44,25 +27,34 @@ export function PatientForm({ initial, onSave, onCancel }: Props) {
     initial
       ? {
           full_name: initial.full_name,
-          document_id: initial.document_id ?? '',
-          birth_date: initial.birth_date ?? '',
+          rut: initial.rut ?? '',
           sex: initial.sex,
-          phone: initial.phone ?? '',
-          email: initial.email ?? '',
-          address: initial.address ?? '',
-          emergency_contact_name: initial.emergency_contact_name ?? '',
-          emergency_contact_phone: initial.emergency_contact_phone ?? '',
-          blood_type: initial.blood_type ?? '',
-          allergies: initial.allergies ?? '',
-          medical_notes: initial.medical_notes ?? '',
+          age_at_accident: initial.age_at_accident,
+          accident_date: initial.accident_date ?? '',
+          initial_diagnoses: initial.initial_diagnoses,
+          initial_diagnoses_notes: initial.initial_diagnoses_notes ?? '',
+          evolutive_diagnoses: initial.evolutive_diagnoses,
+          evolutive_diagnoses_notes: initial.evolutive_diagnoses_notes ?? '',
+          surgeries: initial.surgeries,
+          hospitalized: initial.hospitalized,
           in_followup: initial.in_followup,
         }
       : emptyPatientInput,
   )
+  const [catalog, setCatalog] = useState<DiagnosisCatalogItem[]>([])
   const [saving, setSaving] = useState(false)
   const [scanning, setScanning] = useState(false)
   const [scanError, setScanError] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    supabase
+      .from('diagnosis_catalog')
+      .select('*')
+      .eq('active', true)
+      .order('label', { ascending: true })
+      .then(({ data }) => setCatalog((data as DiagnosisCatalogItem[]) ?? []))
+  }, [])
 
   function update<K extends keyof PatientInput>(key: K, value: PatientInput[K]) {
     setForm((f) => ({ ...f, [key]: value }))
@@ -117,12 +109,11 @@ export function PatientForm({ initial, onSave, onCancel }: Props) {
     <form onSubmit={handleSubmit} className="space-y-6">
       <div className="rounded-xl border border-dashed border-teal-300 bg-teal-50 p-4 dark:border-teal-800 dark:bg-teal-950/40">
         <p className="text-sm font-medium text-teal-900 dark:text-teal-200">
-          Completar con foto (carnet, ficha o documento)
+          Completar con foto (carnet u otro documento)
         </p>
         <p className="mt-1 text-xs text-teal-800/80 dark:text-teal-300/80">
-          Toma o sube una foto del documento del paciente y se intentarán
-          prellenar los campos automáticamente. Siempre revisa los datos
-          antes de guardar.
+          Toma o sube una foto y se intentarán prellenar nombre, RUT y sexo.
+          Siempre revisa los datos antes de guardar.
         </p>
         <div className="mt-3 flex items-center gap-3">
           <input
@@ -144,61 +135,137 @@ export function PatientForm({ initial, onSave, onCancel }: Props) {
         </div>
       </div>
 
-      <label className="flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-700">
-        <input
-          type="checkbox"
-          checked={form.in_followup}
-          onChange={(e) => update('in_followup', e.target.checked)}
-          className="h-4 w-4 rounded border-slate-300 text-teal-700 focus:ring-teal-600"
-        />
-        <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-          Paciente en seguimiento
-        </span>
-      </label>
-
-      <div>
-        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
-          Sexo
-        </label>
-        <select
-          value={form.sex ?? ''}
-          onChange={(e) =>
-            update('sex', (e.target.value || null) as PatientInput['sex'])
-          }
-          className="mt-1 w-full max-w-xs rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-teal-600 focus:ring-1 focus:ring-teal-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
-        >
-          <option value="">Sin especificar</option>
-          <option value="F">Femenino</option>
-          <option value="M">Masculino</option>
-          <option value="Otro">Otro</option>
-        </select>
-      </div>
-
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        {fields.map((field) => (
-          <div key={field.name} className={field.full ? 'sm:col-span-2' : ''}>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
-              {field.label}
-            </label>
-            {field.name === 'allergies' || field.name === 'medical_notes' ? (
-              <textarea
-                value={(form[field.name] as string) ?? ''}
-                onChange={(e) => update(field.name, e.target.value)}
-                rows={3}
-                className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-teal-600 focus:ring-1 focus:ring-teal-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
-              />
-            ) : (
-              <input
-                type={field.type ?? 'text'}
-                required={field.name === 'full_name'}
-                value={(form[field.name] as string) ?? ''}
-                onChange={(e) => update(field.name, e.target.value)}
-                className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-teal-600 focus:ring-1 focus:ring-teal-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
-              />
-            )}
-          </div>
-        ))}
+        <div className="sm:col-span-2">
+          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+            Nombre completo
+          </label>
+          <input
+            type="text"
+            required
+            value={form.full_name}
+            onChange={(e) => update('full_name', e.target.value)}
+            className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-teal-600 focus:ring-1 focus:ring-teal-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+            RUT
+          </label>
+          <input
+            type="text"
+            value={form.rut ?? ''}
+            onChange={(e) => update('rut', e.target.value)}
+            className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-teal-600 focus:ring-1 focus:ring-teal-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+            Sexo
+          </label>
+          <select
+            value={form.sex ?? ''}
+            onChange={(e) =>
+              update('sex', (e.target.value || null) as PatientInput['sex'])
+            }
+            className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-teal-600 focus:ring-1 focus:ring-teal-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+          >
+            <option value="">Sin especificar</option>
+            <option value="F">Femenino</option>
+            <option value="M">Masculino</option>
+            <option value="Otro">Otro</option>
+          </select>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+            Edad (al accidente)
+          </label>
+          <input
+            type="number"
+            min={0}
+            value={form.age_at_accident ?? ''}
+            onChange={(e) =>
+              update(
+                'age_at_accident',
+                e.target.value === '' ? null : Number(e.target.value),
+              )
+            }
+            className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-teal-600 focus:ring-1 focus:ring-teal-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+            Fecha accidente
+          </label>
+          <input
+            type="date"
+            value={form.accident_date ?? ''}
+            onChange={(e) => update('accident_date', e.target.value)}
+            className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-teal-600 focus:ring-1 focus:ring-teal-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+          />
+        </div>
       </div>
+
+      <DiagnosisListEditor
+        title="Diagnóstico inicial"
+        entries={form.initial_diagnoses}
+        onChange={(entries) => update('initial_diagnoses', entries)}
+        notes={form.initial_diagnoses_notes ?? ''}
+        onNotesChange={(notes) => update('initial_diagnoses_notes', notes)}
+        catalog={catalog}
+      />
+
+      <DiagnosisListEditor
+        title="Diagnósticos evolutivos"
+        entries={form.evolutive_diagnoses}
+        onChange={(entries) => update('evolutive_diagnoses', entries)}
+        notes={form.evolutive_diagnoses_notes ?? ''}
+        onNotesChange={(notes) => update('evolutive_diagnoses_notes', notes)}
+        catalog={catalog}
+      />
+
+      <SurgeriesEditor
+        entries={form.surgeries}
+        onChange={(entries) => update('surgeries', entries)}
+      />
+
+      <div className="flex flex-wrap gap-6">
+        <div>
+          <p className="mb-1 text-sm font-medium text-slate-700 dark:text-slate-300">
+            Condición
+          </p>
+          <SegmentedToggle
+            value={form.hospitalized}
+            onChange={(v) => update('hospitalized', v)}
+            falseLabel="Ambulatorio"
+            trueLabel="Hospitalizado"
+          />
+        </div>
+
+        <div>
+          <p className="mb-1 text-sm font-medium text-slate-700 dark:text-slate-300">
+            Seguimiento
+          </p>
+          <SegmentedToggle
+            value={form.in_followup}
+            onChange={(v) => update('in_followup', v)}
+            falseLabel="No"
+            trueLabel="Sí"
+          />
+        </div>
+      </div>
+
+      {initial ? (
+        <PatientAlerts patientId={initial.id} />
+      ) : (
+        <p className="text-sm text-slate-500">
+          Podrás agregar alertas después de guardar el paciente.
+        </p>
+      )}
 
       <div className="flex justify-end gap-3">
         <button

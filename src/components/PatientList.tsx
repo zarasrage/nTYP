@@ -6,19 +6,18 @@ interface Props {
   loading: boolean
   onSelect: (patient: Patient) => void
   onNew: () => void
+  onManageDiagnoses: () => void
 }
 
 type Tab = 'seguimiento' | 'todos'
 
-function calcAge(birthDate: string | null): number | null {
-  if (!birthDate) return null
-  const dob = new Date(birthDate)
-  if (Number.isNaN(dob.getTime())) return null
-  const diff = Date.now() - dob.getTime()
-  return Math.floor(diff / (1000 * 60 * 60 * 24 * 365.25))
-}
-
-export function PatientList({ patients, loading, onSelect, onNew }: Props) {
+export function PatientList({
+  patients,
+  loading,
+  onSelect,
+  onNew,
+  onManageDiagnoses,
+}: Props) {
   const [tab, setTab] = useState<Tab>('seguimiento')
   const [query, setQuery] = useState('')
 
@@ -36,39 +35,47 @@ export function PatientList({ patients, loading, onSelect, onNew }: Props) {
     return byTab.filter(
       (p) =>
         p.full_name.toLowerCase().includes(q) ||
-        p.document_id?.toLowerCase().includes(q),
+        p.rut?.toLowerCase().includes(q),
     )
   }, [patients, tab, query])
 
   return (
     <div>
-      <div className="flex gap-1 border-b border-slate-200 dark:border-slate-800">
+      <div className="flex items-center justify-between">
+        <div className="flex gap-1 border-b border-slate-200 dark:border-slate-800">
+          <button
+            onClick={() => setTab('seguimiento')}
+            className={`px-3 py-2 text-sm font-medium border-b-2 -mb-px transition ${
+              tab === 'seguimiento'
+                ? 'border-teal-700 text-teal-700 dark:text-teal-400'
+                : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+            }`}
+          >
+            En seguimiento ({inFollowupCount})
+          </button>
+          <button
+            onClick={() => setTab('todos')}
+            className={`px-3 py-2 text-sm font-medium border-b-2 -mb-px transition ${
+              tab === 'todos'
+                ? 'border-teal-700 text-teal-700 dark:text-teal-400'
+                : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+            }`}
+          >
+            Todos los pacientes ({patients.length})
+          </button>
+        </div>
         <button
-          onClick={() => setTab('seguimiento')}
-          className={`px-3 py-2 text-sm font-medium border-b-2 -mb-px transition ${
-            tab === 'seguimiento'
-              ? 'border-teal-700 text-teal-700 dark:text-teal-400'
-              : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
-          }`}
+          onClick={onManageDiagnoses}
+          className="mb-2 text-xs text-slate-500 hover:text-teal-700 hover:underline dark:hover:text-teal-400"
         >
-          En seguimiento ({inFollowupCount})
-        </button>
-        <button
-          onClick={() => setTab('todos')}
-          className={`px-3 py-2 text-sm font-medium border-b-2 -mb-px transition ${
-            tab === 'todos'
-              ? 'border-teal-700 text-teal-700 dark:text-teal-400'
-              : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
-          }`}
-        >
-          Todos los pacientes ({patients.length})
+          Gestionar diagnósticos
         </button>
       </div>
 
       <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <input
           type="search"
-          placeholder="Buscar por nombre o RUT/documento…"
+          placeholder="Buscar por nombre o RUT…"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           className="w-full max-w-sm rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-teal-600 focus:ring-1 focus:ring-teal-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
@@ -93,38 +100,42 @@ export function PatientList({ patients, loading, onSelect, onNew }: Props) {
         </p>
       ) : (
         <ul className="mt-6 divide-y divide-slate-200 rounded-xl border border-slate-200 dark:divide-slate-800 dark:border-slate-800">
-          {filtered.map((p) => {
-            const age = calcAge(p.birth_date)
-            return (
-              <li key={p.id}>
-                <button
-                  onClick={() => onSelect(p)}
-                  className="flex w-full items-center justify-between px-4 py-3 text-left hover:bg-slate-50 dark:hover:bg-slate-900"
-                >
-                  <div>
-                    <p className="font-medium text-slate-900 dark:text-slate-100">
-                      {p.full_name}
-                      {tab === 'todos' && !p.in_followup && (
-                        <span className="ml-2 rounded-full bg-slate-100 px-2 py-0.5 text-xs font-normal text-slate-500 dark:bg-slate-800 dark:text-slate-400">
-                          Fuera de seguimiento
-                        </span>
-                      )}
-                    </p>
-                    <p className="text-sm text-slate-500">
-                      {[
-                        p.document_id,
-                        age !== null ? `${age} años` : null,
-                        p.phone,
-                      ]
-                        .filter(Boolean)
-                        .join(' · ') || 'Sin datos adicionales'}
-                    </p>
-                  </div>
-                  <span className="text-slate-400">›</span>
-                </button>
-              </li>
-            )
-          })}
+          {filtered.map((p) => (
+            <li key={p.id}>
+              <button
+                onClick={() => onSelect(p)}
+                className="flex w-full items-center justify-between px-4 py-3 text-left hover:bg-slate-50 dark:hover:bg-slate-900"
+              >
+                <div>
+                  <p className="font-medium text-slate-900 dark:text-slate-100">
+                    {p.full_name}
+                    {p.hospitalized && (
+                      <span className="ml-2 rounded-full bg-blue-100 px-2 py-0.5 text-xs font-normal text-blue-700 dark:bg-blue-950 dark:text-blue-300">
+                        Hospitalizado
+                      </span>
+                    )}
+                    {tab === 'todos' && !p.in_followup && (
+                      <span className="ml-2 rounded-full bg-slate-100 px-2 py-0.5 text-xs font-normal text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+                        Fuera de seguimiento
+                      </span>
+                    )}
+                  </p>
+                  <p className="text-sm text-slate-500">
+                    {[
+                      p.rut,
+                      p.age_at_accident !== null
+                        ? `${p.age_at_accident} años al accidente`
+                        : null,
+                      p.accident_date,
+                    ]
+                      .filter(Boolean)
+                      .join(' · ') || 'Sin datos adicionales'}
+                  </p>
+                </div>
+                <span className="text-slate-400">›</span>
+              </button>
+            </li>
+          ))}
         </ul>
       )}
     </div>

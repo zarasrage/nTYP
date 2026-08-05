@@ -14,31 +14,17 @@ const ALLOWED_MEDIA_TYPES = new Set([
   'image/gif',
 ])
 
-const FIELD_KEYS = [
-  'full_name',
-  'document_id',
-  'birth_date',
-  'sex',
-  'phone',
-  'email',
-  'address',
-  'emergency_contact_name',
-  'emergency_contact_phone',
-  'blood_type',
-  'allergies',
-  'medical_notes',
-] as const
+const FIELD_KEYS = ['full_name', 'rut', 'sex'] as const
 
-const EXTRACTION_PROMPT = `Eres un asistente que ayuda a personal de salud a transcribir datos desde una foto de un documento (carnet de identidad, carnet de salud, ficha clínica, etc.) hacia un formulario de registro de pacientes.
+const EXTRACTION_PROMPT = `Eres un asistente que ayuda a transcribir datos desde una foto de un documento de identidad (carnet, cédula, etc.) hacia un formulario de registro de pacientes.
 
 Devuelve EXCLUSIVAMENTE un objeto JSON (sin texto adicional, sin markdown) con las claves que puedas identificar con confianza de entre:
 ${FIELD_KEYS.join(', ')}
 
 Reglas:
 - "sex" solo puede ser "M", "F" u "Otro".
-- "birth_date" en formato YYYY-MM-DD si es legible.
+- "rut" tal como aparece en el documento (con guión y dígito verificador si está presente).
 - Si un dato no aparece claramente en la imagen o no estás seguro, omite esa clave (no inventes valores).
-- No incluyas números de documento u otros datos si el texto es ilegible o ambiguo.
 - No agregues comentarios ni explicaciones, solo el JSON.`
 
 function extractJson(text: string): Record<string, unknown> | null {
@@ -60,7 +46,6 @@ function sanitize(raw: Record<string, unknown>): Record<string, string> {
     const trimmed = value.trim()
     if (!trimmed) continue
     if (key === 'sex' && !['M', 'F', 'Otro'].includes(trimmed)) continue
-    if (key === 'birth_date' && !/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) continue
     out[key] = trimmed.slice(0, 500)
   }
   return out

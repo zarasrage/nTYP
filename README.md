@@ -1,13 +1,20 @@
 # Registro de Pacientes (PWA)
 
 App instalable (PWA) de un solo uso para registrar y editar fichas de
-pacientes, con base de datos en Supabase y una función de IA que ayuda a
-prellenar el formulario a partir de una foto (carnet, ficha, etc.). No tiene
-login: se abre directo a la lista de pacientes.
+pacientes en seguimiento por traumatología, con base de datos en Supabase y
+una función de IA que ayuda a prellenar nombre/RUT/sexo a partir de una foto
+de documento. No tiene login: se abre directo al panel de alertas.
 
-La pantalla principal muestra por defecto los pacientes marcados como **"En
-seguimiento"**; una segunda pestaña, **"Todos los pacientes"**, muestra el
-listado completo, incluyendo a quienes ya no están en seguimiento activo.
+**Pantalla de inicio — Alertas**: cuadrados con las alertas (seguimiento,
+curación, control, cultivos/biopsia) de cada paciente, con pestañas Hoy /
+Semana / Mes / Históricas. Click en una alerta abre la ficha del paciente.
+
+**Sección Pacientes**: pestañas "En seguimiento" y "Todos los pacientes".
+Cada ficha tiene RUT, sexo, edad y fecha del accidente, diagnóstico inicial
+y evolutivo (con lateralidad Der/Izq/Bilateral y texto libre), cirugías,
+condición hospitalizado/ambulatorio, seguimiento sí/no, y sus alertas. El
+selector de diagnósticos sale de un catálogo administrable desde "Gestionar
+diagnósticos" (dentro de Pacientes), sin tocar código.
 
 Stack: React + TypeScript + Vite, Tailwind CSS, `vite-plugin-pwa`, Supabase
 (Postgres con RLS), función serverless en Netlify que llama a la API de
@@ -17,8 +24,9 @@ Claude (Anthropic) para leer la imagen.
 
 1. Crea un proyecto en [app.supabase.com](https://app.supabase.com).
 2. Ve a **SQL Editor** y ejecuta el contenido de [`supabase/schema.sql`](./supabase/schema.sql).
-   Esto crea la tabla `patients` (con el campo `in_followup`), un trigger de
-   `updated_at` y las políticas de Row Level Security.
+   Esto crea las tablas `patients`, `alerts` y `diagnosis_catalog` (con el
+   catálogo inicial de diagnósticos ya cargado), el trigger de `updated_at`
+   y las políticas de Row Level Security.
 3. En **Project Settings > API**, copia el `Project URL` y el `anon public key`.
 
 ## 2. Variables de entorno
@@ -69,22 +77,30 @@ IA, `npm run dev` también funciona.
 En el formulario de paciente, el botón **"Usar foto"** abre la cámara (o
 selector de archivos) del dispositivo, envía la imagen a
 `/.netlify/functions/extract-patient`, y esa función le pide a un modelo de
-Claude con visión que extraiga nombre, documento, fecha de nacimiento, etc.
-en JSON. Los campos detectados prellenan el formulario, pero **siempre deben
-revisarse antes de guardar** — el modelo puede cometer errores de lectura,
-especialmente con letra manuscrita o fotos de baja calidad.
+Claude con visión que extraiga nombre, RUT y sexo desde un documento de
+identidad, en JSON. Los campos detectados prellenan el formulario, pero
+**siempre deben revisarse antes de guardar** — el modelo puede cometer
+errores de lectura, especialmente con fotos de baja calidad.
 
 ## Estructura
 
 ```
 src/
-  components/    lista y formulario de pacientes
+  components/
+    AlertsPanel.tsx        panel de alertas (inicio)
+    PatientList.tsx        lista de pacientes (En seguimiento / Todos)
+    PatientForm.tsx        alta/edición de paciente
+    PatientAlerts.tsx      alertas de un paciente
+    DiagnosisListEditor.tsx  diagnóstico inicial/evolutivo (lista + lateralidad)
+    SurgeriesEditor.tsx    lista de cirugías
+    DiagnosisAdmin.tsx     administrar catálogo de diagnósticos
+    SegmentedToggle.tsx    toggle Sí/No / Hospitalizado-Ambulatorio
   lib/           cliente de Supabase
-  types/         tipos de Patient
+  types/         tipos de Patient, Alert, catálogo
 netlify/functions/
   extract-patient.ts   llama a la API de Claude para leer la foto
 supabase/
-  schema.sql     tabla patients + RLS
+  schema.sql     tablas patients, alerts, diagnosis_catalog + RLS
 ```
 
 ## Notas de seguridad
