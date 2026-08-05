@@ -12,8 +12,8 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['icons/apple-touch-icon.png'],
       manifest: {
-        name: 'Registro de Pacientes',
-        short_name: 'Pacientes',
+        name: 'Navegación',
+        short_name: 'Navegación',
         description: 'App para registrar y editar fichas de pacientes',
         theme_color: '#9ae547',
         background_color: '#fffbf2',

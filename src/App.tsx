@@ -5,7 +5,6 @@ import { PatientForm } from './components/PatientForm'
 import { PatientAlertsView } from './components/PatientAlertsView'
 import { AlertsPanel } from './components/AlertsPanel'
 import { DiagnosisAdmin } from './components/DiagnosisAdmin'
-import { PlusIcon } from './components/icons'
 import type { Alert, Patient, PatientInput } from './types/patient'
 
 type Section = 'alerts' | 'patients'
@@ -114,18 +113,20 @@ function App() {
   return (
     <div className="min-h-screen bg-cream-50">
       <header className="relative overflow-hidden rounded-b-[32px] bg-lime-400 px-4 pb-5 pt-6 shadow-[0_6px_0_0_rgba(0,0,0,0.04)] sm:px-6">
-        <span className="confetti absolute right-10 top-3 h-3 w-3 bg-blossom-300" />
-        <span className="confetti absolute right-24 top-10 h-2 w-2 bg-cream-50" />
-        <span className="confetti absolute left-8 bottom-2 h-2.5 w-2.5 bg-lavender-400" />
-        <span className="confetti absolute right-4 bottom-6 h-2 w-2 bg-peach-400" />
+        <span className="confetti absolute right-3 top-2 h-2.5 w-2.5 bg-blossom-300" />
+        <span className="confetti absolute left-3 top-2 h-2 w-2 bg-cream-50" />
+        <span className="confetti absolute left-6 bottom-1.5 h-2 w-2 bg-lavender-400" />
+        <span className="confetti absolute right-6 bottom-1.5 h-2.5 w-2.5 bg-peach-400" />
 
         <div className="relative mx-auto flex max-w-3xl items-center justify-between gap-3">
           <div className="flex items-center gap-2.5">
-            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-cream-50 shadow-sm">
-              <PlusIcon className="h-5 w-5 text-lime-600" />
-            </span>
+            <img
+              src="/icons/icon-512.png"
+              alt=""
+              className="h-10 w-10 shrink-0 rounded-2xl shadow-sm"
+            />
             <h1 className="font-display text-2xl font-bold tracking-tight text-ink-900">
-              Pacientes
+              Navegación
             </h1>
           </div>
           <nav className="flex gap-1 rounded-full bg-white/50 p-1">
