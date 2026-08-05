@@ -1,9 +1,9 @@
-@import url("https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;0,9..144,800;1,9..144,500;1,9..144,600&family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,500&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Manrope:wght@400;500;600;700;800&display=swap");
 @import "tailwindcss";
 
 @theme {
-  --font-display: "Fraunces", ui-serif, Georgia, serif;
-  --font-sans: "Plus Jakarta Sans", system-ui, -apple-system, sans-serif;
+  --font-display: "Baloo 2", ui-rounded, system-ui, sans-serif;
+  --font-sans: "Manrope", system-ui, -apple-system, sans-serif;
 
   /* Verde limón — color de marca */
   --color-lime-50: #f7fee6;
@@ -40,12 +40,12 @@
   --color-peach-700: #b85c15;
 
   /* Neutros cálidos */
-  --color-cream-50: #fffdf8;
-  --color-cream-100: #fff8ec;
-  --color-cream-200: #fbefd9;
-  --color-ink-900: #241f16;
-  --color-ink-700: #4a4335;
-  --color-ink-500: #857a64;
+  --color-cream-50: #fffdfa;
+  --color-cream-100: #fdfaf4;
+  --color-cream-200: #f2ece0;
+  --color-ink-900: #2a2620;
+  --color-ink-700: #55503f;
+  --color-ink-500: #8b8471;
 }
 
 :root {
@@ -61,7 +61,7 @@ body,
 body {
   margin: 0;
   font-family: var(--font-sans);
-  background: var(--color-cream-100);
+  background: var(--color-cream-50);
   color: var(--color-ink-900);
   -webkit-font-smoothing: antialiased;
 }
@@ -71,38 +71,11 @@ body {
   color: var(--color-ink-900);
 }
 
-/* Fondo decorativo: un par de blobs difusos, fijos, sutiles. */
-.bg-blobs {
-  position: fixed;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  overflow: hidden;
-}
-
-.bg-blobs::before,
-.bg-blobs::after {
-  content: "";
+/* Confeti decorativo: puntos chicos y nítidos, no manchas difusas. */
+.confetti {
   position: absolute;
-  border-radius: 50%;
-  filter: blur(70px);
-  opacity: 0.55;
-}
-
-.bg-blobs::before {
-  width: 46vmax;
-  height: 46vmax;
-  top: -18vmax;
-  left: -16vmax;
-  background: var(--color-lime-200);
-}
-
-.bg-blobs::after {
-  width: 38vmax;
-  height: 38vmax;
-  top: -10vmax;
-  right: -14vmax;
-  background: var(--color-blossom-200);
+  border-radius: 9999px;
+  pointer-events: none;
 }
 
 @keyframes pop {

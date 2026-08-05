@@ -112,25 +112,28 @@ function App() {
   }
 
   return (
-    <div className="relative min-h-screen">
-      <div className="bg-blobs" />
+    <div className="min-h-screen bg-cream-50">
+      <header className="relative overflow-hidden rounded-b-[32px] bg-lime-400 px-4 pb-5 pt-6 shadow-[0_6px_0_0_rgba(0,0,0,0.04)] sm:px-6">
+        <span className="confetti absolute right-10 top-3 h-3 w-3 bg-blossom-300" />
+        <span className="confetti absolute right-24 top-10 h-2 w-2 bg-cream-50" />
+        <span className="confetti absolute left-8 bottom-2 h-2.5 w-2.5 bg-lavender-400" />
+        <span className="confetti absolute right-4 bottom-6 h-2 w-2 bg-peach-400" />
 
-      <header className="relative z-10 px-4 pt-5 sm:px-6">
-        <div className="mx-auto flex max-w-3xl items-center justify-between gap-3 rounded-3xl border border-white/60 bg-white/80 px-5 py-3.5 shadow-[0_8px_30px_-12px_rgba(94,168,11,0.35)] backdrop-blur-md">
+        <div className="relative mx-auto flex max-w-3xl items-center justify-between gap-3">
           <div className="flex items-center gap-2.5">
-            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-lime-400 to-blossom-400 shadow-inner">
-              <PlusIcon className="h-5 w-5 text-white" />
+            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-cream-50 shadow-sm">
+              <PlusIcon className="h-5 w-5 text-lime-600" />
             </span>
-            <h1 className="font-display text-xl font-semibold tracking-tight text-ink-900">
-              Registro de Pacientes
+            <h1 className="font-display text-2xl font-bold tracking-tight text-ink-900">
+              Pacientes
             </h1>
           </div>
-          <nav className="flex gap-1 rounded-full bg-cream-200/70 p-1">
+          <nav className="flex gap-1 rounded-full bg-white/50 p-1">
             <button
               onClick={() => setSection('alerts')}
-              className={`rounded-full px-3.5 py-1.5 text-sm font-semibold transition ${
+              className={`rounded-full px-3.5 py-1.5 text-sm font-bold transition ${
                 section === 'alerts'
-                  ? 'bg-lime-400 text-ink-900 shadow-sm'
+                  ? 'bg-cream-50 text-lime-700 shadow-sm'
                   : 'text-ink-700 hover:text-ink-900'
               }`}
             >
@@ -141,9 +144,9 @@ function App() {
                 setSection('patients')
                 setPatientView({ name: 'list' })
               }}
-              className={`rounded-full px-3.5 py-1.5 text-sm font-semibold transition ${
+              className={`rounded-full px-3.5 py-1.5 text-sm font-bold transition ${
                 section === 'patients'
-                  ? 'bg-lime-400 text-ink-900 shadow-sm'
+                  ? 'bg-cream-50 text-lime-700 shadow-sm'
                   : 'text-ink-700 hover:text-ink-900'
               }`}
             >
@@ -153,7 +156,7 @@ function App() {
         </div>
       </header>
 
-      <main className="relative z-10 mx-auto max-w-3xl px-4 py-8 sm:px-6">
+      <main className="mx-auto max-w-3xl px-4 py-8 sm:px-6">
         {error && (
           <div className="mb-4 rounded-2xl border border-blossom-200 bg-blossom-50 px-4 py-3 text-sm font-medium text-blossom-700">
             {error}
