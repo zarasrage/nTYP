@@ -119,6 +119,18 @@ function App() {
     }
   }
 
+  async function handleDeletePatient(patient: Patient) {
+    setError(null)
+    const { error } = await supabase.from('patients').delete().eq('id', patient.id)
+    if (error) {
+      setError(error.message)
+      return
+    }
+    await loadPatients()
+    await loadAlerts()
+    setPatientView({ name: 'list' })
+  }
+
   function handleSelectAlert(alert: Alert) {
     const patient = patients.find((p) => p.id === alert.patient_id)
     if (!patient) return
@@ -237,6 +249,7 @@ function App() {
             <PatientForm
               initial={patientView.patient}
               onSave={handleSave}
+              onDelete={handleDeletePatient}
               onCancel={() =>
                 setPatientView({
                   name: 'patient-alerts',

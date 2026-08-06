@@ -48,28 +48,23 @@ function PatientRow({
   const openRef = useRef(false)
   const startXRef = useRef<number | null>(null)
   const draggingRef = useRef(false)
+  const movedRef = useRef(false)
+  const MOVE_THRESHOLD = 6
 
   function handlePointerDown(e: React.PointerEvent) {
     startXRef.current = e.clientX
     draggingRef.current = true
+    movedRef.current = false
     ;(e.currentTarget as HTMLElement).setPointerCapture(e.pointerId)
   }
 
   function handlePointerMove(e: React.PointerEvent) {
     if (!draggingRef.current || startXRef.current === null) return
     const delta = e.clientX - startXRef.current
+    if (Math.abs(delta) > MOVE_THRESHOLD) movedRef.current = true
     const base = openRef.current ? REVEAL_WIDTH : 0
     const next = Math.min(Math.max(base + delta, 0), REVEAL_WIDTH)
     setDragX(next)
-  }
-
-  function endDrag() {
-    if (!draggingRef.current) return
-    draggingRef.current = false
-    startXRef.current = null
-    const shouldOpen = dragX > OPEN_THRESHOLD
-    openRef.current = shouldOpen
-    setDragX(shouldOpen ? REVEAL_WIDTH : 0)
   }
 
   function close() {
@@ -77,12 +72,21 @@ function PatientRow({
     setDragX(0)
   }
 
-  function handleRowClick() {
-    if (openRef.current) {
-      close()
+  function endDrag() {
+    if (!draggingRef.current) return
+    draggingRef.current = false
+    startXRef.current = null
+
+    if (!movedRef.current) {
+      // Simple tap: no meaningful drag happened.
+      if (openRef.current) close()
+      else onOpenAlerts(p)
       return
     }
-    onOpenAlerts(p)
+
+    const shouldOpen = dragX > OPEN_THRESHOLD
+    openRef.current = shouldOpen
+    setDragX(shouldOpen ? REVEAL_WIDTH : 0)
   }
 
   return (
@@ -117,9 +121,16 @@ function PatientRow({
         }}
         className="relative flex items-center gap-1 border border-cream-200 bg-white/95 pr-1.5 touch-pan-y"
       >
-        <button
-          onClick={handleRowClick}
-          className="flex flex-1 items-center gap-3 px-3.5 py-3 text-left"
+        <div
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault()
+              onOpenAlerts(p)
+            }
+          }}
+          className="flex flex-1 cursor-pointer items-center gap-3 px-3.5 py-3 text-left"
         >
           <span
             className={`grid h-10 w-10 shrink-0 place-items-center rounded-full font-display text-base font-semibold ${avatarStyle(p.full_name)}`}
@@ -152,8 +163,9 @@ function PatientRow({
                 .join(' · ') || 'Sin datos adicionales'}
             </p>
           </div>
-        </button>
+        </div>
         <button
+          onPointerDown={(e) => e.stopPropagation()}
           onClick={() => onEdit(p)}
           aria-label={`Editar ${p.full_name}`}
           className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-ink-500 transition hover:bg-cream-200/70 hover:text-lime-700"

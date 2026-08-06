@@ -6,10 +6,12 @@ import { inputClass, labelClass } from '../lib/formStyles'
 import { SegmentedToggle } from './SegmentedToggle'
 import { DiagnosisListEditor } from './DiagnosisListEditor'
 import { SurgeriesEditor } from './SurgeriesEditor'
+import { TrashIcon } from './icons'
 
 interface Props {
   initial?: Patient
   onSave: (input: PatientInput) => Promise<void>
+  onDelete?: (patient: Patient) => Promise<void>
   onCancel: () => void
 }
 
@@ -22,7 +24,7 @@ function fileToBase64(file: File): Promise<string> {
   })
 }
 
-export function PatientForm({ initial, onSave, onCancel }: Props) {
+export function PatientForm({ initial, onSave, onDelete, onCancel }: Props) {
   const [form, setForm] = useState<PatientInput>(
     initial
       ? {
@@ -45,6 +47,8 @@ export function PatientForm({ initial, onSave, onCancel }: Props) {
   const [saving, setSaving] = useState(false)
   const [scanning, setScanning] = useState(false)
   const [scanError, setScanError] = useState<string | null>(null)
+  const [confirmingDelete, setConfirmingDelete] = useState(false)
+  const [deleting, setDeleting] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -102,6 +106,16 @@ export function PatientForm({ initial, onSave, onCancel }: Props) {
       await onSave(form)
     } finally {
       setSaving(false)
+    }
+  }
+
+  async function handleDelete() {
+    if (!initial || !onDelete) return
+    setDeleting(true)
+    try {
+      await onDelete(initial)
+    } finally {
+      setDeleting(false)
     }
   }
 
@@ -261,6 +275,48 @@ export function PatientForm({ initial, onSave, onCancel }: Props) {
           {saving ? 'Guardando…' : 'Guardar paciente'}
         </button>
       </div>
+
+      {initial && onDelete && (
+        <div className="rounded-3xl border border-blossom-200 bg-blossom-50/50 p-4">
+          {confirmingDelete ? (
+            <div>
+              <p className="text-sm font-semibold text-blossom-700">
+                ¿Eliminar a {initial.full_name}?
+              </p>
+              <p className="mt-1 text-sm text-blossom-700/80">
+                Se borrará junto con sus alertas. Esta acción no se puede
+                deshacer.
+              </p>
+              <div className="mt-3 flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setConfirmingDelete(false)}
+                  className="rounded-full border border-cream-200 bg-white px-4 py-2 text-sm font-semibold text-ink-700 transition hover:bg-cream-100"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  onClick={handleDelete}
+                  disabled={deleting}
+                  className="rounded-full bg-blossom-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blossom-700 disabled:opacity-60"
+                >
+                  {deleting ? 'Eliminando…' : 'Sí, eliminar'}
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setConfirmingDelete(true)}
+              className="inline-flex items-center gap-1.5 text-sm font-semibold text-blossom-600 hover:text-blossom-700"
+            >
+              <TrashIcon className="h-4 w-4" />
+              Eliminar paciente
+            </button>
+          )}
+        </div>
+      )}
     </form>
   )
 }
