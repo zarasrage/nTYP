@@ -45,6 +45,71 @@ function avatarStyle(name: string) {
   return AVATAR_STYLES[sum % AVATAR_STYLES.length]
 }
 
+function AlertItem({
+  alert,
+  onToggleCompleted,
+  onRemove,
+}: {
+  alert: Alert
+  onToggleCompleted: (alert: Alert) => void
+  onRemove: (id: string) => void
+}) {
+  const meta = ALERT_TYPE_META[alert.type]
+  return (
+    <li
+      className={`flex items-center gap-4 rounded-2xl border p-4 transition ${
+        alert.completed
+          ? 'border-cream-200 bg-white/50 opacity-60'
+          : 'border-cream-200 bg-white shadow-[0_6px_20px_-12px_rgba(36,31,22,0.3)]'
+      }`}
+    >
+      <button
+        onClick={() => onToggleCompleted(alert)}
+        aria-label={alert.completed ? 'Marcar como pendiente' : 'Marcar como completada'}
+        className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border-2 transition ${
+          alert.completed
+            ? 'animate-pop border-lime-500 bg-lime-400 text-white'
+            : 'border-cream-200 text-transparent hover:border-lime-400'
+        }`}
+      >
+        <CheckIcon className="h-4 w-4" />
+      </button>
+
+      <div className="min-w-0 flex-1">
+        <div className="flex flex-wrap items-center gap-2">
+          <span
+            className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold text-white ${meta.solid}`}
+          >
+            <meta.Icon className="h-3.5 w-3.5" />
+            {meta.label}
+          </span>
+          <span
+            className={`text-sm font-medium ${alert.completed ? 'text-ink-500 line-through' : 'text-ink-700'}`}
+          >
+            {formatDate(alert.due_date)} · {relativeLabel(alert.due_date)}
+          </span>
+        </div>
+        {alert.note && (
+          <p
+            className={`mt-1 text-sm ${alert.completed ? 'text-ink-500 line-through' : 'text-ink-500'}`}
+          >
+            {alert.note}
+          </p>
+        )}
+      </div>
+
+      <button
+        type="button"
+        onClick={() => onRemove(alert.id)}
+        aria-label="Quitar alerta"
+        className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-ink-500/70 transition hover:bg-blossom-100 hover:text-blossom-600"
+      >
+        <TrashIcon className="h-4 w-4" />
+      </button>
+    </li>
+  )
+}
+
 export function PatientAlertsView({ patient, onBack, onEdit }: Props) {
   const [alerts, setAlerts] = useState<Alert[]>([])
   const [loading, setLoading] = useState(true)
@@ -54,6 +119,7 @@ export function PatientAlertsView({ patient, onBack, onEdit }: Props) {
   const [dueDate, setDueDate] = useState(todayISO())
   const [note, setNote] = useState('')
   const [saving, setSaving] = useState(false)
+  const [showCompleted, setShowCompleted] = useState(false)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -119,7 +185,6 @@ export function PatientAlertsView({ patient, onBack, onEdit }: Props) {
 
   const pending = alerts.filter((a) => !a.completed)
   const completed = alerts.filter((a) => a.completed)
-  const ordered = [...pending, ...completed]
 
   return (
     <div>
@@ -188,70 +253,52 @@ export function PatientAlertsView({ patient, onBack, onEdit }: Props) {
 
       {loading ? (
         <p className="text-sm text-ink-500">Cargando alertas…</p>
-      ) : ordered.length === 0 ? (
+      ) : alerts.length === 0 ? (
         <p className="text-sm text-ink-500">Sin alertas registradas.</p>
       ) : (
-        <ul className="space-y-3">
-          {ordered.map((a) => {
-            const meta = ALERT_TYPE_META[a.type]
-            return (
-              <li
-                key={a.id}
-                className={`flex items-center gap-4 rounded-2xl border p-4 transition ${
-                  a.completed
-                    ? 'border-cream-200 bg-white/50 opacity-60'
-                    : 'border-cream-200 bg-white shadow-[0_6px_20px_-12px_rgba(36,31,22,0.3)]'
-                }`}
+        <>
+          {pending.length === 0 ? (
+            <p className="text-sm text-ink-500">Sin alertas pendientes.</p>
+          ) : (
+            <ul className="space-y-3">
+              {pending.map((a) => (
+                <AlertItem
+                  key={a.id}
+                  alert={a}
+                  onToggleCompleted={toggleCompleted}
+                  onRemove={removeAlert}
+                />
+              ))}
+            </ul>
+          )}
+
+          {completed.length > 0 && (
+            <div className="mt-4">
+              <button
+                type="button"
+                onClick={() => setShowCompleted((v) => !v)}
+                className="mb-3 inline-flex items-center gap-1.5 text-sm font-semibold text-lime-700 hover:text-lime-800"
               >
-                <button
-                  onClick={() => toggleCompleted(a)}
-                  aria-label={
-                    a.completed ? 'Marcar como pendiente' : 'Marcar como completada'
-                  }
-                  className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border-2 transition ${
-                    a.completed
-                      ? 'animate-pop border-lime-500 bg-lime-400 text-white'
-                      : 'border-cream-200 text-transparent hover:border-lime-400'
-                  }`}
-                >
-                  <CheckIcon className="h-4 w-4" />
-                </button>
+                {showCompleted
+                  ? 'Ocultar alertas concluidas'
+                  : `Mostrar alertas concluidas (${completed.length})`}
+              </button>
 
-                <div className="min-w-0 flex-1">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span
-                      className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold text-white ${meta.solid}`}
-                    >
-                      <meta.Icon className="h-3.5 w-3.5" />
-                      {meta.label}
-                    </span>
-                    <span
-                      className={`text-sm font-medium ${a.completed ? 'text-ink-500 line-through' : 'text-ink-700'}`}
-                    >
-                      {formatDate(a.due_date)} · {relativeLabel(a.due_date)}
-                    </span>
-                  </div>
-                  {a.note && (
-                    <p
-                      className={`mt-1 text-sm ${a.completed ? 'text-ink-500 line-through' : 'text-ink-500'}`}
-                    >
-                      {a.note}
-                    </p>
-                  )}
-                </div>
-
-                <button
-                  type="button"
-                  onClick={() => removeAlert(a.id)}
-                  aria-label="Quitar alerta"
-                  className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-ink-500/70 transition hover:bg-blossom-100 hover:text-blossom-600"
-                >
-                  <TrashIcon className="h-4 w-4" />
-                </button>
-              </li>
-            )
-          })}
-        </ul>
+              {showCompleted && (
+                <ul className="space-y-3">
+                  {completed.map((a) => (
+                    <AlertItem
+                      key={a.id}
+                      alert={a}
+                      onToggleCompleted={toggleCompleted}
+                      onRemove={removeAlert}
+                    />
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
+        </>
       )}
 
       <div className="mt-5 flex flex-col gap-3 rounded-3xl border-2 border-dashed border-cream-200 bg-white/60 p-4 sm:flex-row sm:items-end">
