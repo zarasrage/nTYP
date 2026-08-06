@@ -103,6 +103,22 @@ function App() {
     }
   }
 
+  async function handleToggleHospitalized(patient: Patient) {
+    setPatients((prev) =>
+      prev.map((p) =>
+        p.id === patient.id ? { ...p, hospitalized: !p.hospitalized } : p,
+      ),
+    )
+    const { error } = await supabase
+      .from('patients')
+      .update({ hospitalized: !patient.hospitalized })
+      .eq('id', patient.id)
+    if (error) {
+      setError(error.message)
+      await loadPatients()
+    }
+  }
+
   function handleSelectAlert(alert: Alert) {
     const patient = patients.find((p) => p.id === alert.patient_id)
     if (!patient) return
@@ -183,6 +199,7 @@ function App() {
             onEdit={(patient) => setPatientView({ name: 'edit', patient })}
             onNew={() => setPatientView({ name: 'new' })}
             onManageDiagnoses={() => setPatientView({ name: 'diagnoses' })}
+            onToggleHospitalized={handleToggleHospitalized}
           />
         )}
 

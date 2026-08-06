@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import type { Patient } from '../types/patient'
 import { PencilIcon, PlusIcon, SearchIcon } from './icons'
 
@@ -9,6 +9,7 @@ interface Props {
   onEdit: (patient: Patient) => void
   onNew: () => void
   onManageDiagnoses: () => void
+  onToggleHospitalized: (patient: Patient) => void
 }
 
 type Tab = 'seguimiento' | 'todos'
@@ -25,6 +26,145 @@ function avatarStyle(name: string) {
   return AVATAR_STYLES[sum % AVATAR_STYLES.length]
 }
 
+const REVEAL_WIDTH = 128
+const OPEN_THRESHOLD = REVEAL_WIDTH / 2
+
+function PatientRow({
+  patient: p,
+  tab,
+  onOpenAlerts,
+  onEdit,
+  onToggleHospitalized,
+  style,
+}: {
+  patient: Patient
+  tab: Tab
+  onOpenAlerts: (patient: Patient) => void
+  onEdit: (patient: Patient) => void
+  onToggleHospitalized: (patient: Patient) => void
+  style?: React.CSSProperties
+}) {
+  const [dragX, setDragX] = useState(0)
+  const openRef = useRef(false)
+  const startXRef = useRef<number | null>(null)
+  const draggingRef = useRef(false)
+
+  function handlePointerDown(e: React.PointerEvent) {
+    startXRef.current = e.clientX
+    draggingRef.current = true
+    ;(e.currentTarget as HTMLElement).setPointerCapture(e.pointerId)
+  }
+
+  function handlePointerMove(e: React.PointerEvent) {
+    if (!draggingRef.current || startXRef.current === null) return
+    const delta = e.clientX - startXRef.current
+    const base = openRef.current ? REVEAL_WIDTH : 0
+    const next = Math.min(Math.max(base + delta, 0), REVEAL_WIDTH)
+    setDragX(next)
+  }
+
+  function endDrag() {
+    if (!draggingRef.current) return
+    draggingRef.current = false
+    startXRef.current = null
+    const shouldOpen = dragX > OPEN_THRESHOLD
+    openRef.current = shouldOpen
+    setDragX(shouldOpen ? REVEAL_WIDTH : 0)
+  }
+
+  function close() {
+    openRef.current = false
+    setDragX(0)
+  }
+
+  function handleRowClick() {
+    if (openRef.current) {
+      close()
+      return
+    }
+    onOpenAlerts(p)
+  }
+
+  return (
+    <li
+      style={style}
+      className="animate-rise-in relative overflow-hidden rounded-2xl shadow-[0_6px_18px_-12px_rgba(36,31,22,0.3)]"
+    >
+      <div
+        className={`absolute inset-y-0 left-0 flex w-32 items-center justify-center text-sm font-bold text-white ${
+          p.hospitalized ? 'bg-lime-500' : 'bg-peach-500'
+        }`}
+      >
+        <button
+          onClick={() => {
+            onToggleHospitalized(p)
+            close()
+          }}
+          className="flex h-full w-full items-center justify-center px-2 text-center"
+        >
+          {p.hospitalized ? 'Dar de alta' : 'Hospitalizar'}
+        </button>
+      </div>
+
+      <div
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={endDrag}
+        onPointerCancel={endDrag}
+        style={{
+          transform: `translateX(${dragX}px)`,
+          transition: draggingRef.current ? 'none' : 'transform 0.2s ease-out',
+        }}
+        className="relative flex items-center gap-1 border border-cream-200 bg-white/95 pr-1.5 touch-pan-y"
+      >
+        <button
+          onClick={handleRowClick}
+          className="flex flex-1 items-center gap-3 px-3.5 py-3 text-left"
+        >
+          <span
+            className={`grid h-10 w-10 shrink-0 place-items-center rounded-full font-display text-base font-semibold ${avatarStyle(p.full_name)}`}
+          >
+            {p.full_name.trim().charAt(0).toUpperCase() || '?'}
+          </span>
+          <div className="min-w-0">
+            <p className="flex flex-wrap items-center gap-1.5 font-semibold text-ink-900">
+              {p.full_name}
+              {p.hospitalized && (
+                <span className="rounded-full bg-lavender-100 px-2 py-0.5 text-xs font-medium text-lavender-700">
+                  Hospitalizado
+                </span>
+              )}
+              {tab === 'todos' && !p.in_followup && (
+                <span className="rounded-full bg-cream-200 px-2 py-0.5 text-xs font-medium text-ink-500">
+                  Fuera de seguimiento
+                </span>
+              )}
+            </p>
+            <p className="truncate text-sm text-ink-500">
+              {[
+                p.rut,
+                p.age_at_accident !== null
+                  ? `${p.age_at_accident} años al accidente`
+                  : null,
+                p.accident_date,
+              ]
+                .filter(Boolean)
+                .join(' · ') || 'Sin datos adicionales'}
+            </p>
+          </div>
+        </button>
+        <button
+          onClick={() => onEdit(p)}
+          aria-label={`Editar ${p.full_name}`}
+          className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-ink-500 transition hover:bg-cream-200/70 hover:text-lime-700"
+        >
+          <PencilIcon className="h-4 w-4" />
+        </button>
+      </div>
+    </li>
+  )
+}
+
 export function PatientList({
   patients,
   loading,
@@ -32,6 +172,7 @@ export function PatientList({
   onEdit,
   onNew,
   onManageDiagnoses,
+  onToggleHospitalized,
 }: Props) {
   const [tab, setTab] = useState<Tab>('seguimiento')
   const [query, setQuery] = useState('')
@@ -53,6 +194,9 @@ export function PatientList({
         p.rut?.toLowerCase().includes(q),
     )
   }, [patients, tab, query])
+
+  const hospitalized = filtered.filter((p) => p.hospitalized)
+  const ambulatory = filtered.filter((p) => !p.hospitalized)
 
   return (
     <div>
@@ -120,59 +264,49 @@ export function PatientList({
           </p>
         </div>
       ) : (
-        <ul className="mt-6 space-y-2.5">
-          {filtered.map((p, i) => (
-            <li
-              key={p.id}
-              style={{ animationDelay: `${i * 30}ms` }}
-              className="animate-rise-in flex items-center gap-1 rounded-2xl border border-cream-200 bg-white/80 pr-1.5 shadow-[0_6px_18px_-12px_rgba(36,31,22,0.3)] transition hover:shadow-[0_10px_24px_-12px_rgba(36,31,22,0.35)]"
-            >
-              <button
-                onClick={() => onOpenAlerts(p)}
-                className="flex flex-1 items-center gap-3 px-3.5 py-3 text-left"
-              >
-                <span
-                  className={`grid h-10 w-10 shrink-0 place-items-center rounded-full font-display text-base font-semibold ${avatarStyle(p.full_name)}`}
-                >
-                  {p.full_name.trim().charAt(0).toUpperCase() || '?'}
-                </span>
-                <div className="min-w-0">
-                  <p className="flex flex-wrap items-center gap-1.5 font-semibold text-ink-900">
-                    {p.full_name}
-                    {p.hospitalized && (
-                      <span className="rounded-full bg-lavender-100 px-2 py-0.5 text-xs font-medium text-lavender-700">
-                        Hospitalizado
-                      </span>
-                    )}
-                    {tab === 'todos' && !p.in_followup && (
-                      <span className="rounded-full bg-cream-200 px-2 py-0.5 text-xs font-medium text-ink-500">
-                        Fuera de seguimiento
-                      </span>
-                    )}
-                  </p>
-                  <p className="truncate text-sm text-ink-500">
-                    {[
-                      p.rut,
-                      p.age_at_accident !== null
-                        ? `${p.age_at_accident} años al accidente`
-                        : null,
-                      p.accident_date,
-                    ]
-                      .filter(Boolean)
-                      .join(' · ') || 'Sin datos adicionales'}
-                  </p>
-                </div>
-              </button>
-              <button
-                onClick={() => onEdit(p)}
-                aria-label={`Editar ${p.full_name}`}
-                className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-ink-500 transition hover:bg-cream-200/70 hover:text-lime-700"
-              >
-                <PencilIcon className="h-4 w-4" />
-              </button>
-            </li>
-          ))}
-        </ul>
+        <div className="mt-6 space-y-2.5">
+          {hospitalized.length > 0 && (
+            <ul className="space-y-2.5">
+              {hospitalized.map((p, i) => (
+                <PatientRow
+                  key={p.id}
+                  patient={p}
+                  tab={tab}
+                  onOpenAlerts={onOpenAlerts}
+                  onEdit={onEdit}
+                  onToggleHospitalized={onToggleHospitalized}
+                  style={{ animationDelay: `${i * 30}ms` }}
+                />
+              ))}
+            </ul>
+          )}
+
+          {hospitalized.length > 0 && ambulatory.length > 0 && (
+            <div className="flex items-center gap-3 py-1">
+              <span className="h-px flex-1 bg-cream-200" />
+              <span className="text-xs font-semibold text-ink-500">
+                Ambulatorio
+              </span>
+              <span className="h-px flex-1 bg-cream-200" />
+            </div>
+          )}
+
+          {ambulatory.length > 0 && (
+            <ul className="space-y-2.5">
+              {ambulatory.map((p, i) => (
+                <PatientRow
+                  key={p.id}
+                  patient={p}
+                  tab={tab}
+                  onOpenAlerts={onOpenAlerts}
+                  onEdit={onEdit}
+                  onToggleHospitalized={onToggleHospitalized}
+                  style={{ animationDelay: `${i * 30}ms` }}
+                />
+              ))}
+            </ul>
+          )}
+        </div>
       )}
     </div>
   )
