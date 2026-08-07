@@ -119,6 +119,22 @@ function App() {
     }
   }
 
+  async function handleToggleFollowup(patient: Patient) {
+    setPatients((prev) =>
+      prev.map((p) =>
+        p.id === patient.id ? { ...p, in_followup: !p.in_followup } : p,
+      ),
+    )
+    const { error } = await supabase
+      .from('patients')
+      .update({ in_followup: !patient.in_followup })
+      .eq('id', patient.id)
+    if (error) {
+      setError(error.message)
+      await loadPatients()
+    }
+  }
+
   async function handleDeletePatient(patient: Patient) {
     setError(null)
     const { error } = await supabase.from('patients').delete().eq('id', patient.id)
@@ -212,6 +228,7 @@ function App() {
             onNew={() => setPatientView({ name: 'new' })}
             onManageDiagnoses={() => setPatientView({ name: 'diagnoses' })}
             onToggleHospitalized={handleToggleHospitalized}
+            onToggleFollowup={handleToggleFollowup}
           />
         )}
 

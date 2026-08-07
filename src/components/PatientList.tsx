@@ -11,6 +11,7 @@ interface Props {
   onNew: () => void
   onManageDiagnoses: () => void
   onToggleHospitalized: (patient: Patient) => void
+  onToggleFollowup: (patient: Patient) => void
 }
 
 type Tab = 'seguimiento' | 'todos'
@@ -30,12 +31,15 @@ function avatarStyle(name: string) {
 const REVEAL_WIDTH = 128
 const OPEN_THRESHOLD = REVEAL_WIDTH / 2
 
+type OpenDir = 'none' | 'left' | 'right'
+
 function PatientRow({
   patient: p,
   tab,
   onOpenAlerts,
   onEdit,
   onToggleHospitalized,
+  onToggleFollowup,
   style,
 }: {
   patient: Patient
@@ -43,10 +47,11 @@ function PatientRow({
   onOpenAlerts: (patient: Patient) => void
   onEdit: (patient: Patient) => void
   onToggleHospitalized: (patient: Patient) => void
+  onToggleFollowup: (patient: Patient) => void
   style?: React.CSSProperties
 }) {
   const [dragX, setDragX] = useState(0)
-  const openRef = useRef(false)
+  const openRef = useRef<OpenDir>('none')
   const startXRef = useRef<number | null>(null)
   const draggingRef = useRef(false)
   const movedRef = useRef(false)
@@ -63,13 +68,18 @@ function PatientRow({
     if (!draggingRef.current || startXRef.current === null) return
     const delta = e.clientX - startXRef.current
     if (Math.abs(delta) > MOVE_THRESHOLD) movedRef.current = true
-    const base = openRef.current ? REVEAL_WIDTH : 0
-    const next = Math.min(Math.max(base + delta, 0), REVEAL_WIDTH)
+    const base =
+      openRef.current === 'right'
+        ? REVEAL_WIDTH
+        : openRef.current === 'left'
+          ? -REVEAL_WIDTH
+          : 0
+    const next = Math.min(Math.max(base + delta, -REVEAL_WIDTH), REVEAL_WIDTH)
     setDragX(next)
   }
 
   function close() {
-    openRef.current = false
+    openRef.current = 'none'
     setDragX(0)
   }
 
@@ -80,14 +90,16 @@ function PatientRow({
 
     if (!movedRef.current) {
       // Simple tap: no meaningful drag happened.
-      if (openRef.current) close()
+      if (openRef.current !== 'none') close()
       else onOpenAlerts(p)
       return
     }
 
-    const shouldOpen = dragX > OPEN_THRESHOLD
-    openRef.current = shouldOpen
-    setDragX(shouldOpen ? REVEAL_WIDTH : 0)
+    const shouldOpenRight = dragX > OPEN_THRESHOLD
+    const shouldOpenLeft = dragX < -OPEN_THRESHOLD
+    const dir: OpenDir = shouldOpenRight ? 'right' : shouldOpenLeft ? 'left' : 'none'
+    openRef.current = dir
+    setDragX(dir === 'right' ? REVEAL_WIDTH : dir === 'left' ? -REVEAL_WIDTH : 0)
   }
 
   return (
@@ -108,6 +120,22 @@ function PatientRow({
           className="flex h-full w-full items-center justify-center px-2 text-center"
         >
           {p.hospitalized ? 'Dar de alta' : 'Hospitalizar'}
+        </button>
+      </div>
+
+      <div
+        className={`absolute inset-y-0 right-0 flex w-32 items-center justify-center text-sm font-bold text-white ${
+          p.in_followup ? 'bg-blossom-500' : 'bg-lavender-500'
+        }`}
+      >
+        <button
+          onClick={() => {
+            onToggleFollowup(p)
+            close()
+          }}
+          className="flex h-full w-full items-center justify-center px-2 text-center"
+        >
+          {p.in_followup ? 'Dejar seguimiento' : 'Poner en seguimiento'}
         </button>
       </div>
 
@@ -184,6 +212,7 @@ export function PatientList({
   onNew,
   onManageDiagnoses,
   onToggleHospitalized,
+  onToggleFollowup,
 }: Props) {
   const [tab, setTab] = useState<Tab>('seguimiento')
   const [query, setQuery] = useState('')
@@ -286,6 +315,7 @@ export function PatientList({
                   onOpenAlerts={onOpenAlerts}
                   onEdit={onEdit}
                   onToggleHospitalized={onToggleHospitalized}
+                  onToggleFollowup={onToggleFollowup}
                   style={{ animationDelay: `${i * 30}ms` }}
                 />
               ))}
@@ -312,6 +342,7 @@ export function PatientList({
                   onOpenAlerts={onOpenAlerts}
                   onEdit={onEdit}
                   onToggleHospitalized={onToggleHospitalized}
+                  onToggleFollowup={onToggleFollowup}
                   style={{ animationDelay: `${i * 30}ms` }}
                 />
               ))}
