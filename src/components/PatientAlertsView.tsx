@@ -4,6 +4,7 @@ import type { Alert, AlertType, Patient } from '../types/patient'
 import { ALERT_TYPES } from '../types/patient'
 import { ALERT_TYPE_META } from '../lib/alertMeta'
 import { inputClass } from '../lib/formStyles'
+import { diagnosisSummary } from '../lib/patientDisplay'
 import { ArrowLeftIcon, CheckIcon, PencilIcon, PlusIcon, TrashIcon } from './icons'
 
 interface Props {
@@ -211,9 +212,9 @@ export function PatientAlertsView({ patient, onBack, onEdit }: Props) {
               {[
                 patient.rut,
                 patient.age_at_accident !== null
-                  ? `${patient.age_at_accident} años al accidente`
+                  ? `${patient.age_at_accident} años`
                   : null,
-                patient.accident_date,
+                diagnosisSummary(patient),
               ]
                 .filter(Boolean)
                 .join(' · ') || 'Sin datos adicionales'}

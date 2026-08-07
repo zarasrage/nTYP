@@ -1,6 +1,7 @@
 import { useMemo, useRef, useState } from 'react'
 import type { Patient } from '../types/patient'
 import { PencilIcon, PlusIcon, SearchIcon } from './icons'
+import { diagnosisSummary } from '../lib/patientDisplay'
 
 interface Props {
   patients: Patient[]
@@ -154,10 +155,8 @@ function PatientRow({
             <p className="truncate text-sm text-ink-500">
               {[
                 p.rut,
-                p.age_at_accident !== null
-                  ? `${p.age_at_accident} años al accidente`
-                  : null,
-                p.accident_date,
+                p.age_at_accident !== null ? `${p.age_at_accident} años` : null,
+                diagnosisSummary(p),
               ]
                 .filter(Boolean)
                 .join(' · ') || 'Sin datos adicionales'}
