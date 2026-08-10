@@ -5,9 +5,11 @@ import { PatientForm } from './components/PatientForm'
 import { PatientAlertsView } from './components/PatientAlertsView'
 import { AlertsPanel } from './components/AlertsPanel'
 import { DiagnosisAdmin } from './components/DiagnosisAdmin'
+import { NotificationSettings } from './components/NotificationSettings'
+import { BellIcon } from './components/icons'
 import type { Alert, Patient, PatientInput } from './types/patient'
 
-type Section = 'alerts' | 'patients'
+type Section = 'alerts' | 'patients' | 'settings'
 type PatientView =
   | { name: 'list' }
   | { name: 'new' }
@@ -173,31 +175,44 @@ function App() {
               Navegación
             </h1>
           </div>
-          <nav className="flex gap-1 rounded-full bg-white/50 p-1">
+          <div className="flex items-center gap-2">
+            <nav className="flex gap-1 rounded-full bg-white/50 p-1">
+              <button
+                onClick={() => setSection('alerts')}
+                className={`rounded-full px-3.5 py-1.5 text-sm font-bold transition ${
+                  section === 'alerts'
+                    ? 'bg-cream-50 text-lime-700 shadow-sm'
+                    : 'text-ink-700 hover:text-ink-900'
+                }`}
+              >
+                Alertas
+              </button>
+              <button
+                onClick={() => {
+                  setSection('patients')
+                  setPatientView({ name: 'list' })
+                }}
+                className={`rounded-full px-3.5 py-1.5 text-sm font-bold transition ${
+                  section === 'patients'
+                    ? 'bg-cream-50 text-lime-700 shadow-sm'
+                    : 'text-ink-700 hover:text-ink-900'
+                }`}
+              >
+                Pacientes
+              </button>
+            </nav>
             <button
-              onClick={() => setSection('alerts')}
-              className={`rounded-full px-3.5 py-1.5 text-sm font-bold transition ${
-                section === 'alerts'
+              onClick={() => setSection('settings')}
+              aria-label="Ajustes"
+              className={`grid h-9 w-9 shrink-0 place-items-center rounded-full bg-white/50 transition ${
+                section === 'settings'
                   ? 'bg-cream-50 text-lime-700 shadow-sm'
                   : 'text-ink-700 hover:text-ink-900'
               }`}
             >
-              Alertas
+              <BellIcon className="h-4 w-4" />
             </button>
-            <button
-              onClick={() => {
-                setSection('patients')
-                setPatientView({ name: 'list' })
-              }}
-              className={`rounded-full px-3.5 py-1.5 text-sm font-bold transition ${
-                section === 'patients'
-                  ? 'bg-cream-50 text-lime-700 shadow-sm'
-                  : 'text-ink-700 hover:text-ink-900'
-              }`}
-            >
-              Pacientes
-            </button>
-          </nav>
+          </div>
         </div>
       </header>
 
@@ -206,6 +221,10 @@ function App() {
           <div className="mb-4 rounded-2xl border border-blossom-200 bg-blossom-50 px-4 py-3 text-sm font-medium text-blossom-700">
             {error}
           </div>
+        )}
+
+        {section === 'settings' && (
+          <NotificationSettings onBack={() => setSection('alerts')} />
         )}
 
         {section === 'alerts' && (

@@ -59,13 +59,29 @@ create table if not exists public.alerts (
   patient_id uuid not null references public.patients (id) on delete cascade,
   type text not null check (type in ('seguimiento', 'curacion', 'control', 'cultivos_biopsia')),
   due_date date not null,
+  -- Hora opcional (hora de Chile, tal como la ingresa el usuario). Si es
+  -- null, la alerta no dispara notificación push.
+  due_time time,
   note text,
-  completed boolean not null default false
+  completed boolean not null default false,
+  -- Se marca cuando ya se envió la notificación push de esta alerta, para
+  -- no volver a enviarla.
+  notified_at timestamptz
 );
 
 create index if not exists alerts_due_date_idx on public.alerts (due_date);
 create index if not exists alerts_patient_id_idx on public.alerts (patient_id);
 create index if not exists alerts_completed_idx on public.alerts (completed);
+
+-- Suscripciones push (una por dispositivo instalado) para las notificaciones
+-- de alertas próximas.
+create table if not exists public.push_subscriptions (
+  id uuid primary key default gen_random_uuid(),
+  created_at timestamptz not null default now(),
+  endpoint text not null unique,
+  p256dh text not null,
+  auth text not null
+);
 
 -- Mantener updated_at al día en cada edición.
 create or replace function public.set_updated_at()
@@ -90,6 +106,7 @@ create trigger patients_set_updated_at
 alter table public.patients enable row level security;
 alter table public.alerts enable row level security;
 alter table public.diagnosis_catalog enable row level security;
+alter table public.push_subscriptions enable row level security;
 
 drop policy if exists "Public can read patients" on public.patients;
 create policy "Public can read patients" on public.patients for select to public using (true);
@@ -115,3 +132,12 @@ drop policy if exists "Public can insert diagnosis_catalog" on public.diagnosis_
 create policy "Public can insert diagnosis_catalog" on public.diagnosis_catalog for insert to public with check (true);
 drop policy if exists "Public can update diagnosis_catalog" on public.diagnosis_catalog;
 create policy "Public can update diagnosis_catalog" on public.diagnosis_catalog for update to public using (true) with check (true);
+
+drop policy if exists "Public can read push_subscriptions" on public.push_subscriptions;
+create policy "Public can read push_subscriptions" on public.push_subscriptions for select to public using (true);
+drop policy if exists "Public can insert push_subscriptions" on public.push_subscriptions;
+create policy "Public can insert push_subscriptions" on public.push_subscriptions for insert to public with check (true);
+drop policy if exists "Public can update push_subscriptions" on public.push_subscriptions;
+create policy "Public can update push_subscriptions" on public.push_subscriptions for update to public using (true) with check (true);
+drop policy if exists "Public can delete push_subscriptions" on public.push_subscriptions;
+create policy "Public can delete push_subscriptions" on public.push_subscriptions for delete to public using (true);

@@ -42,6 +42,8 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,png,ico}'],
+        // Maneja los eventos 'push' y 'notificationclick' de las notificaciones.
+        importScripts: ['push-sw.js'],
         // Never cache API calls to Supabase or the extraction function.
         navigateFallbackDenylist: [/^\/\.netlify\/functions\//],
         runtimeCaching: [

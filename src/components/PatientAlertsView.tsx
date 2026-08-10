@@ -34,6 +34,10 @@ function formatDate(iso: string) {
   return `${d}-${m}-${y}`
 }
 
+function formatTime(time: string) {
+  return time.slice(0, 5)
+}
+
 const AVATAR_STYLES = [
   'bg-lime-100 text-lime-700',
   'bg-blossom-100 text-blossom-600',
@@ -87,7 +91,9 @@ function AlertItem({
           <span
             className={`text-sm font-medium ${alert.completed ? 'text-ink-500 line-through' : 'text-ink-700'}`}
           >
-            {formatDate(alert.due_date)} · {relativeLabel(alert.due_date)}
+            {formatDate(alert.due_date)}
+            {alert.due_time ? ` · ${formatTime(alert.due_time)}` : ''} ·{' '}
+            {relativeLabel(alert.due_date)}
           </span>
         </div>
         {alert.note && (
@@ -118,6 +124,7 @@ export function PatientAlertsView({ patient, onBack, onEdit }: Props) {
 
   const [type, setType] = useState<AlertType>('seguimiento')
   const [dueDate, setDueDate] = useState(todayISO())
+  const [dueTime, setDueTime] = useState('')
   const [note, setNote] = useState('')
   const [saving, setSaving] = useState(false)
   const [showCompleted, setShowCompleted] = useState(false)
@@ -147,6 +154,7 @@ export function PatientAlertsView({ patient, onBack, onEdit }: Props) {
       patient_id: patient.id,
       type,
       due_date: dueDate,
+      due_time: dueTime || null,
       note: note.trim() || null,
     })
     setSaving(false)
@@ -155,6 +163,7 @@ export function PatientAlertsView({ patient, onBack, onEdit }: Props) {
       return
     }
     setNote('')
+    setDueTime('')
     await load()
   }
 
@@ -302,7 +311,11 @@ export function PatientAlertsView({ patient, onBack, onEdit }: Props) {
         </>
       )}
 
-      <div className="mt-5 flex flex-col gap-3 rounded-3xl border-2 border-dashed border-cream-200 bg-white/60 p-4 sm:flex-row sm:items-end">
+      <p className="mb-2 mt-5 text-xs text-ink-500">
+        Si le pones hora a la alerta, este dispositivo recibirá una
+        notificación 1 hora antes (si las tienes activadas en Ajustes).
+      </p>
+      <div className="flex flex-col gap-3 rounded-3xl border-2 border-dashed border-cream-200 bg-white/60 p-4 sm:flex-row sm:items-end">
         <div>
           <label className="block text-xs font-semibold text-ink-500">Tipo</label>
           <select
@@ -323,6 +336,17 @@ export function PatientAlertsView({ patient, onBack, onEdit }: Props) {
             type="date"
             value={dueDate}
             onChange={(e) => setDueDate(e.target.value)}
+            className={`${inputClass} mt-1 py-2`}
+          />
+        </div>
+        <div>
+          <label className="block text-xs font-semibold text-ink-500">
+            Hora (opcional)
+          </label>
+          <input
+            type="time"
+            value={dueTime}
+            onChange={(e) => setDueTime(e.target.value)}
             className={`${inputClass} mt-1 py-2`}
           />
         </div>

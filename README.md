@@ -8,6 +8,8 @@ de documento. No tiene login: se abre directo al panel de alertas.
 **Pantalla de inicio — Alertas**: cuadrados con las alertas (seguimiento,
 curación, control, cultivos/biopsia) de cada paciente, con pestañas Hoy /
 Semana / Mes / Históricas. Click en una alerta abre la ficha del paciente.
+Las alertas pueden tener una hora opcional y avisar por notificación push 1
+hora antes (ver [Notificaciones](#notificaciones)).
 
 **Sección Pacientes**: pestañas "En seguimiento" y "Todos los pacientes".
 Cada ficha tiene RUT, sexo, edad y fecha del accidente, diagnóstico inicial
@@ -43,6 +45,9 @@ Completa:
   `netlify/functions/extract-patient.ts` para leer la foto del documento.
   Consíguela en [console.anthropic.com](https://console.anthropic.com/settings/keys).
   **Nunca** se expone al navegador.
+- `VITE_VAPID_PUBLIC_KEY` / `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` /
+  `VAPID_SUBJECT`: para las notificaciones push (ver sección
+  [Notificaciones](#notificaciones) más abajo).
 
 ## 3. Desarrollo local
 
@@ -64,7 +69,8 @@ IA, `npm run dev` también funciona.
    `npm run build`, publish `dist`, functions `netlify/functions`).
 3. En **Site settings > Environment variables**, agrega las mismas variables
    del paso 2 (`VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`,
-   `ANTHROPIC_API_KEY`).
+   `ANTHROPIC_API_KEY`, `VITE_VAPID_PUBLIC_KEY`, `VAPID_PUBLIC_KEY`,
+   `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`).
 4. Deploy. La app queda instalable como PWA (ícono, `manifest.json` y
    service worker generados por `vite-plugin-pwa`).
 5. **Recomendado**: como la app no tiene login, protege la URL con la
@@ -82,6 +88,45 @@ identidad, en JSON. Los campos detectados prellenan el formulario, pero
 **siempre deben revisarse antes de guardar** — el modelo puede cometer
 errores de lectura, especialmente con fotos de baja calidad.
 
+## Notificaciones
+
+Notificaciones push (Web Push) para avisar 1 hora antes de una alerta que
+tenga hora asignada. Requiere iOS 16.4+ con la app instalada en la pantalla
+de inicio (o cualquier navegador de escritorio/Android moderno). No tiene
+costo ni requiere cuenta de Apple Developer: usa el protocolo estándar Web
+Push, que Apple soporta gratis para apps instaladas como PWA.
+
+**Cómo funciona:**
+
+1. Cada alerta puede tener una hora opcional (`due_time`) además de la
+   fecha. Si no tiene hora, no genera notificación.
+2. Desde **Ajustes** (ícono de campana en el header) cada persona activa las
+   notificaciones en su propio dispositivo. Eso pide permiso al navegador y
+   guarda una suscripción push en la tabla `push_subscriptions`.
+3. La función programada `netlify/functions/send-alert-notifications.ts`
+   corre cada 5 minutos (Netlify Scheduled Functions), revisa qué alertas
+   vencen dentro de la próxima hora y no han sido notificadas, y les envía
+   un push a todos los dispositivos suscritos usando la librería `web-push`
+   con las claves VAPID.
+4. El service worker (`public/push-sw.js`) recibe el push y muestra la
+   notificación del sistema, incluso con la app cerrada.
+
+**Configurar las claves VAPID** (una sola vez, no tiene costo):
+
+```bash
+npx web-push generate-vapid-keys --json
+```
+
+Copia `publicKey` a `VITE_VAPID_PUBLIC_KEY` y `VAPID_PUBLIC_KEY` (mismo
+valor en ambas), y `privateKey` a `VAPID_PRIVATE_KEY`. `VAPID_SUBJECT` es un
+`mailto:` con un correo de contacto (lo exige el estándar, no envía
+correos). Agrega las 4 variables en tu `.env` local y en Netlify (Site
+settings → Environment variables).
+
+Netlify Scheduled Functions y el volumen de envíos de este proyecto (dos
+dispositivos, alertas puntuales) están muy por debajo de los límites del
+plan gratuito de Netlify y Supabase.
+
 ## Estructura
 
 ```
@@ -94,13 +139,19 @@ src/
     DiagnosisListEditor.tsx  diagnóstico inicial/evolutivo (lista + lateralidad)
     SurgeriesEditor.tsx    lista de cirugías
     DiagnosisAdmin.tsx     administrar catálogo de diagnósticos
+    NotificationSettings.tsx  activar/desactivar notificaciones push
     SegmentedToggle.tsx    toggle Sí/No / Hospitalizado-Ambulatorio
-  lib/           cliente de Supabase
+  lib/
+    supabaseClient.ts  cliente de Supabase
+    push.ts            suscripción/desuscripción a notificaciones push
   types/         tipos de Patient, Alert, catálogo
+public/
+  push-sw.js     maneja los eventos push / notificationclick del service worker
 netlify/functions/
-  extract-patient.ts   llama a la API de Claude para leer la foto
+  extract-patient.ts            llama a la API de Claude para leer la foto
+  send-alert-notifications.ts   función programada: envía notificaciones push
 supabase/
-  schema.sql     tablas patients, alerts, diagnosis_catalog + RLS
+  schema.sql     tablas patients, alerts, diagnosis_catalog, push_subscriptions + RLS
 ```
 
 ## Notas de seguridad

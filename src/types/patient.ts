@@ -64,12 +64,14 @@ export interface Alert {
   patient_id: string
   type: AlertType
   due_date: string
+  due_time: string | null
   note: string | null
   completed: boolean
+  notified_at: string | null
   patient?: { full_name: string } | null
 }
 
-export type AlertInput = Omit<Alert, 'id' | 'created_at' | 'patient'>
+export type AlertInput = Omit<Alert, 'id' | 'created_at' | 'patient' | 'notified_at'>
 
 export const ALERT_TYPES: AlertType[] = [
   'seguimiento',

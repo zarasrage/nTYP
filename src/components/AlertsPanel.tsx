@@ -44,6 +44,10 @@ function formatDate(iso: string) {
   return `${d}-${m}-${y}`
 }
 
+function formatTime(time: string) {
+  return time.slice(0, 5)
+}
+
 function formatDateLong(iso: string) {
   const [y, m, d] = iso.split('-')
   const months = [
@@ -123,6 +127,7 @@ function AlertRow({
         </div>
         <p className="mt-1 text-sm text-ink-500">
           {formatDate(alert.due_date)}
+          {alert.due_time ? ` · ${formatTime(alert.due_time)}` : ''}
           {alert.note ? ` — ${alert.note}` : ''}
         </p>
       </button>

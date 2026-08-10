@@ -64,6 +64,17 @@ export function CloseIcon({ className }: IconProps) {
   )
 }
 
+export function BellIcon({ className }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      <g className={base}>
+        <path d="M6 10a6 6 0 0 1 12 0c0 4 1.5 5.5 2.2 6.2a.9.9 0 0 1-.6 1.5H4.4a.9.9 0 0 1-.6-1.5C4.5 15.5 6 14 6 10Z" />
+        <path d="M9.5 19.8a2.5 2.5 0 0 0 5 0" />
+      </g>
+    </svg>
+  )
+}
+
 export function TrashIcon({ className }: IconProps) {
   return (
     <svg viewBox="0 0 24 24" className={className} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
