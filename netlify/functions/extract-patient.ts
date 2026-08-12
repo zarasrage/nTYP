@@ -16,7 +16,7 @@ const ALLOWED_MEDIA_TYPES = new Set([
 
 const FIELD_KEYS = ['full_name', 'rut', 'sex'] as const
 
-const EXTRACTION_PROMPT = `Eres un asistente que ayuda a transcribir datos desde una foto de un documento de identidad (carnet, cédula, etc.) hacia un formulario de registro de pacientes.
+const EXTRACTION_PROMPT = `Eres un asistente que ayuda a transcribir datos desde una foto de un documento de identidad chileno (cédula de identidad, carnet, etc.) hacia un formulario de registro de pacientes.
 
 Devuelve EXCLUSIVAMENTE un objeto JSON (sin texto adicional, sin markdown) con las claves que puedas identificar con confianza de entre:
 ${FIELD_KEYS.join(', ')}
@@ -24,6 +24,7 @@ ${FIELD_KEYS.join(', ')}
 Reglas:
 - "sex" solo puede ser "M", "F" u "Otro".
 - "rut" tal como aparece en el documento (con guión y dígito verificador si está presente).
+- "full_name": en los documentos chilenos los apellidos suelen imprimirse ANTES que los nombres, bajo etiquetas como "APELLIDOS" / "NOMBRES" o "APELLIDO PATERNO" / "APELLIDO MATERNO" / "NOMBRES". Identifica cuáles son apellidos y cuáles son nombres según esas etiquetas (o su ubicación habitual si no hay etiquetas), y arma "full_name" en el orden natural chileno: primero el o los nombres, después el o los apellidos. Ejemplo: si el documento muestra "APELLIDOS: PÉREZ GONZÁLEZ" y "NOMBRES: JUAN CARLOS", el resultado debe ser "Juan Carlos Pérez González", no "Pérez González Juan Carlos". Si el documento ya presenta los nombres primero, no lo inviertas.
 - Si un dato no aparece claramente en la imagen o no estás seguro, omite esa clave (no inventes valores).
 - No agregues comentarios ni explicaciones, solo el JSON.`
 
