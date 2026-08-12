@@ -164,22 +164,22 @@ function App() {
         <span className="confetti absolute left-6 bottom-1.5 h-2 w-2 bg-lavender-400" />
         <span className="confetti absolute right-6 bottom-1.5 h-2.5 w-2.5 bg-peach-400" />
 
-        <div className="relative mx-auto flex max-w-3xl items-center justify-between gap-3">
-          <div className="flex items-center gap-2.5">
+        <div className="relative mx-auto flex max-w-3xl flex-wrap items-center justify-between gap-x-2 gap-y-2">
+          <div className="flex min-w-0 items-center gap-1.5 sm:gap-2.5">
             <img
               src="/icons/icon-512.png"
               alt=""
-              className="h-10 w-10 shrink-0 rounded-2xl shadow-sm"
+              className="h-7 w-7 shrink-0 rounded-xl shadow-sm sm:h-10 sm:w-10 sm:rounded-2xl"
             />
-            <h1 className="font-display text-xl font-bold tracking-tight text-ink-900">
+            <h1 className="truncate font-display text-sm font-bold tracking-tight text-ink-900 sm:text-xl">
               Navegación
             </h1>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex shrink-0 items-center gap-1 sm:gap-2">
             <nav className="flex gap-1 rounded-full bg-white/50 p-1">
               <button
                 onClick={() => setSection('alerts')}
-                className={`rounded-full px-3.5 py-1.5 text-sm font-bold transition ${
+                className={`rounded-full px-2 py-1 text-xs font-bold transition sm:px-3.5 sm:py-1.5 sm:text-sm ${
                   section === 'alerts'
                     ? 'bg-cream-50 text-lime-700 shadow-sm'
                     : 'text-ink-700 hover:text-ink-900'
@@ -192,7 +192,7 @@ function App() {
                   setSection('patients')
                   setPatientView({ name: 'list' })
                 }}
-                className={`rounded-full px-3.5 py-1.5 text-sm font-bold transition ${
+                className={`rounded-full px-2 py-1 text-xs font-bold transition sm:px-3.5 sm:py-1.5 sm:text-sm ${
                   section === 'patients'
                     ? 'bg-cream-50 text-lime-700 shadow-sm'
                     : 'text-ink-700 hover:text-ink-900'
@@ -204,13 +204,13 @@ function App() {
             <button
               onClick={() => setSection('settings')}
               aria-label="Ajustes"
-              className={`grid h-9 w-9 shrink-0 place-items-center rounded-full bg-white/50 transition ${
+              className={`grid h-7 w-7 shrink-0 place-items-center rounded-full bg-white/50 transition sm:h-9 sm:w-9 ${
                 section === 'settings'
                   ? 'bg-cream-50 text-lime-700 shadow-sm'
                   : 'text-ink-700 hover:text-ink-900'
               }`}
             >
-              <BellIcon className="h-4 w-4" />
+              <BellIcon className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
             </button>
           </div>
         </div>
