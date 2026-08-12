@@ -169,7 +169,7 @@ function App() {
             <img
               src="/icons/icon-512.png"
               alt=""
-              className="h-7 w-7 shrink-0 rounded-xl shadow-sm sm:h-10 sm:w-10 sm:rounded-2xl"
+              className="h-10 w-10 shrink-0 rounded-xl shadow-sm sm:h-12 sm:w-12 sm:rounded-2xl"
             />
             <h1 className="truncate font-display text-sm font-bold tracking-tight text-ink-900 sm:text-xl">
               Navegación

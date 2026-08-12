@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabaseClient'
 import type { DiagnosisCatalogItem, Patient, PatientInput } from '../types/patient'
 import { emptyPatientInput } from '../types/patient'
 import { inputClass, labelClass } from '../lib/formStyles'
+import { toTitleCase } from '../lib/patientDisplay'
 import { SegmentedToggle } from './SegmentedToggle'
 import { DiagnosisListEditor } from './DiagnosisListEditor'
 import { SurgeriesEditor } from './SurgeriesEditor'
@@ -103,7 +104,7 @@ export function PatientForm({ initial, onSave, onDelete, onCancel }: Props) {
     e.preventDefault()
     setSaving(true)
     try {
-      await onSave(form)
+      await onSave({ ...form, full_name: toTitleCase(form.full_name) })
     } finally {
       setSaving(false)
     }
